@@ -70,6 +70,11 @@ def _like(texto):
     return f"%{t}%" if t else None
 
 
+# Restringe a los comercios de la tabla `seleccion` (si está vacía, no restringe)
+_EN_SELECCION = ("NOT EXISTS (SELECT 1 FROM seleccion) OR {col} IN "
+                 "(SELECT cs.nombre FROM seleccion s JOIN comercios cs ON cs.id = s.comercio_id)")
+
+
 def _where(p, col, busqueda_cols):
     """
     Construye (fragmento_sql, params) con los filtros combinables.
@@ -84,6 +89,8 @@ def _where(p, col, busqueda_cols):
         if vals:
             partes.append(f"{col[nombre]} IN ({','.join('?' * len(vals))})")
             params += vals
+        elif clave == "comercios":      # sin filtro explícito: solo los comercios del análisis
+            partes.append(f"({_EN_SELECCION.format(col=col[nombre])})")
 
     if p.get("precio_min") is not None:
         partes.append(f"{col['precio']} >= ?")
@@ -139,7 +146,9 @@ def obtener_filtros(con=DB_PATH):
     with _conectar(con) as c:
         uno = lambda sql: [r[0] for r in c.execute(sql)]
         return {
-            "comercios": uno("SELECT nombre FROM comercios ORDER BY nombre"),
+            "comercios": uno("""SELECT nombre FROM comercios
+                                WHERE NOT EXISTS (SELECT 1 FROM seleccion)
+                                   OR id IN (SELECT comercio_id FROM seleccion) ORDER BY nombre"""),
             "marcas": uno("""SELECT DISTINCT marca_estandar FROM anuncios
                               WHERE marca_estandar IS NOT NULL AND excluido = 0 ORDER BY 1"""),
             "subcategorias": uno("""SELECT DISTINCT subcategoria FROM anuncios
@@ -314,6 +323,8 @@ def obtener_cambios(con, corrida_antes, corrida_despues, comercios=None):
     if vals:
         extra = f" AND c.nombre IN ({','.join('?' * len(vals))})"
         p_extra = vals
+    else:
+        extra = " AND (" + _EN_SELECCION.format(col="c.nombre") + ")"
     ultima = """SELECT anuncio_id, precio_cop, disponibilidad, fecha_consulta FROM (
                   SELECT o.anuncio_id, o.precio_cop, o.disponibilidad, o.fecha_consulta,
                          ROW_NUMBER() OVER (PARTITION BY o.anuncio_id
