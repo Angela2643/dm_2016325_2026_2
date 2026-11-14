@@ -33,7 +33,9 @@ TZ = timezone(timedelta(hours=-5))  # hora de Colombia
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RAW_DIR = os.path.join(BASE_DIR, "raw")
 DB_PATH = os.path.join(BASE_DIR, "comparador_precios.sqlite")
-UA = "Mozilla/5.0 (proyecto academico UNAL - Mineria de Datos; contacto: abrahamolayaquinchia@gmail.com)"
+# Contacto opcional: se define en la variable de entorno SCRAPER_CONTACTO (no se guarda en el repositorio).
+_CONTACTO = os.environ.get("SCRAPER_CONTACTO")
+UA = "Mozilla/5.0 (proyecto academico UNAL - Mineria de Datos" + (f"; contacto: {_CONTACTO})" if _CONTACTO else ")")
 PAUSA_S = 1.0       # pausa entre peticiones (buenas prácticas)
 PAGINA = 50         # VTEX permite máx. 50 productos por petición
 MAX_OFFSET = 2500   # VTEX no pagina más allá de 2500 resultados
@@ -515,7 +517,7 @@ def asignar_correspondencia(con, corrida_id, csv_path=None):
     con.execute("DELETE FROM productos")
     con_precio = {r["anuncio_id"] for r in con.execute(
         "SELECT anuncio_id FROM v_obs WHERE corrida_id=? AND precio_cop IS NOT NULL", (corrida_id,))}
-    salida = []
+    salida, inconsistentes = [], []
     ids_run = [r[0] for r in con.execute(
         """SELECT DISTINCT c.id FROM ejecuciones e JOIN comercios c ON c.nombre=e.comercio
            WHERE e.corrida_id=? AND e.estado!='fallida' ORDER BY c.id""", (corrida_id,))]
@@ -529,6 +531,13 @@ def asignar_correspondencia(con, corrida_id, csv_path=None):
     for k, rs in grupos.items():
         coms = {r["comercio_id"] for r in rs}
         comp = int(bool(mejor) and set(mejor) <= con_precio_g[k])
+        # Corrección Taller 2: mismo identificador pero contenido/unidad distintos entre los comercios
+        # del análisis => no es la misma presentación, no es comparable (y queda registrado).
+        presentaciones = {(r["contenido_total"], "g" if r["unidad_base"] == "mg" else r["unidad_base"])
+                          for r in rs if r["comercio_id"] in mejor and r["contenido_total"]}
+        if comp and len(presentaciones) > 1:
+            comp = 0
+            inconsistentes.append([k, sorted(map(str, presentaciones)), None])
         donante = min((r for r in rs if r["contenido_total"]), key=lambda r: len(r["nombre_estandar"]), default=None)
         if donante and k.startswith("EAN:"):   # mismo EAN = mismo contenido (regla documentada)
             con.executemany("UPDATE anuncios SET contenido_total=?, unidad_base=? WHERE id=?",
@@ -542,8 +551,16 @@ def asignar_correspondencia(con, corrida_id, csv_path=None):
                           (k, r0["marca_estandar"], r0["nombre_estandar"], r0["subcategoria"],
                            r0["contenido_total"], r0["unidad_base"], len(coms), comp)).lastrowid
         con.executemany("UPDATE anuncios SET producto_id=? WHERE id=?", [(pid, r["id"]) for r in rs])
+        if inconsistentes and inconsistentes[-1][0] == k:
+            inconsistentes[-1][2] = pid
         if comp:
             salida += [(pid, k, r["comercio_id"], r["sku"], r["texto_original"][:90]) for r in rs if r["comercio_id"] in mejor]
+    if inconsistentes and con.execute("SELECT 1 FROM sqlite_master WHERE name='correcciones'").fetchone():
+        for k, pres, pid in inconsistentes:      # registro de la corrección (una sola vez por producto)
+            motivo = f"Presentación inconsistente entre comercios ({k}): {'; '.join(pres)}. Marcado no comparable."
+            if not con.execute("SELECT 1 FROM correcciones WHERE motivo=?", (motivo,)).fetchone():
+                con.execute("""INSERT INTO correcciones (fecha, id_registro, valor_anterior, valor_nuevo, motivo)
+                               VALUES (?,?,?,?,?)""", (ahora_iso(), pid, "comparable=1", "comparable=0", motivo))
     con.commit()
     if csv_path is not None:
         with open(csv_path, "w", newline="", encoding="utf-8") as f:

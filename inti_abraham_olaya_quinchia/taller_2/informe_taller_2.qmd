@@ -110,23 +110,16 @@ n_prod = sql("SELECT COUNT(DISTINCT producto_id) AS n FROM v_comparables WHERE c
 repetidos = sql("""SELECT comercio, producto, COUNT(*) AS anuncios FROM v_comparables
                     WHERE corrida_id = ? GROUP BY comercio, producto_id HAVING COUNT(*) > 1""", [DESPUES])
 md(f"Ejecuciones completas comparadas: **{ANTES}** y **{DESPUES}**. Productos comparables: **{n_prod}** "
-   f"(más de los 8 exigidos). Registros repetidos del mismo producto y comercio en la última ejecución: "
+   f"(más de los 8 exigidos, ya sin las presentaciones inconsistentes). Registros repetidos del mismo producto y comercio en la última ejecución: "
    f"**{len(repetidos)}** (un producto de Carulla tiene dos anuncios, uno de vendedor externo; la canasta usa el más barato).")
 ```
 
 ## 4.2 Presentaciones cuyo contenido no coincide entre comercios
 
-Un mismo identificador común no garantiza la misma presentación: si el contenido o la unidad extraídos del título difieren entre comercios, comparar precios mezcla presentaciones distintas. Esos productos se detectan con una consulta y **se excluyen de los análisis siguientes**.
+Un mismo identificador común no garantiza la misma presentación: si el contenido o la unidad extraídos del título difieren entre comercios, comparar precios mezclaría presentaciones distintas. Al asignar la correspondencia, `scraper.asignar_correspondencia` marca esos productos como **no comparables** y deja constancia en la tabla `correcciones` (no se borra ninguna observación). Quedan fuera de la vista `v_comparables` y de todos los análisis siguientes.
 
 ```{python}
-inconsistentes = sql("""
-    SELECT producto_id, MAX(producto) AS producto,
-           GROUP_CONCAT(DISTINCT comercio || ': ' || IFNULL(contenido_normalizado, '?') || ' ' ||
-                        IFNULL(unidad_normalizada, '?')) AS presentaciones
-      FROM v_comparables WHERE corrida_id = ?
-     GROUP BY producto_id
-    HAVING COUNT(DISTINCT IFNULL(contenido_normalizado, -1)) > 1
-        OR COUNT(DISTINCT IFNULL(unidad_normalizada, '?')) > 1""", [DESPUES])
+inconsistentes = sql("SELECT id_registro AS producto_id, valor_anterior, valor_nuevo, motivo FROM correcciones")
 inconsistentes
 ```
 
@@ -150,7 +143,7 @@ def precios_por_producto(corrida):
 
 P_ANTES, P_DESPUES = precios_por_producto(ANTES), precios_por_producto(DESPUES)
 md(f"Productos analizados con precio en los tres comercios: **{len(P_DESPUES)}** (última ejecución) y "
-   f"**{len(P_ANTES)}** (primera). Excluidos por presentación distinta: **{len(inconsistentes)}**.")
+   f"**{len(P_ANTES)}** (primera). Corregidos como no comparables por presentación distinta: **{len(inconsistentes)}**.")
 ```
 
 ## 4.3 Precio mínimo, máximo y ahorro por presentación

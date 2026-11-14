@@ -19,9 +19,10 @@ from datetime import datetime
 import pandas as pd
 
 import scraper
-from validacion import guardar_rechazadas, validar_observaciones
+from validacion import guardar_rechazadas, validar_comparables, validar_observaciones
 
-COMERCIOS = ["La Rebaja", "Olímpica", "Éxito"]
+# Comercios del análisis (grupos distintos; Éxito se reemplazó por Carulla tras el HTTP 403)
+COMERCIOS = ["Jumbo", "Locatel", "Carulla"]
 
 _SQL_EJECUCION = """INSERT INTO ejecuciones (corrida_id, inicio, comercio, modo, n_registros, n_productos,
     n_esperado_sitio, estado, detalle) VALUES (?,?,?,?,?,?,?,?,?)
@@ -126,4 +127,10 @@ def actualizar_todo(comercios=None, modo="online", db_path=None, on_progress=Non
                                   ORDER BY id DESC LIMIT 1""").fetchone()
             if ult:
                 scraper.asignar_correspondencia(con, ult[0])
+                comp = pd.read_sql_query("SELECT comercio, producto_id FROM v_comparables WHERE corrida_id=?",
+                                         con, params=[ult[0]])
+                try:                                   # regla de cobertura: mínimo de comparables por comercio
+                    validar_comparables(comp, COMERCIOS)
+                except ValueError as e:
+                    avisar("Cobertura", f"advertencia: {e}")
     return pd.DataFrame(resumen), corrida

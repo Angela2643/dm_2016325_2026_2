@@ -33,7 +33,7 @@ Desde `taller_2/`:
 pytest tests/
 ```
 
-Seis pruebas (`tests/test_app.py`) con una base SQLite en memoria y datos simulados: conversión de precios, normalización de unidades, ahorro con empates, unicidad al insertar, detección de cambios y canasta incompleta.
+Catorce pruebas (`tests/test_app.py`) con una base SQLite en memoria y datos simulados: conversión de precios, normalización de unidades, ahorro con empates, unicidad al insertar, detección de cambios, canasta incompleta y presentaciones inconsistentes.
 
 ## Informe final (Quarto)
 
@@ -70,7 +70,7 @@ taller_2/
 
 ## Comercios y cambios respecto al Taller 1
 
-En el Taller 1 el análisis usó **Jumbo, Locatel y Éxito**. En la ejecución del 13 de noviembre de 2026 **Éxito bloqueó la extracción** (`HTTP 403` en el árbol de categorías), por lo que se **reemplazó por Carulla**, también del Grupo Éxito, con catálogo casi idéntico. Se garantizó de nuevo la cobertura: la base marca 41 productos comparables con observación en los tres comercios en ambas ejecuciones. Carulla salió **parcial** (2.596 de 3.026 productos en «Afeitadoras»), igual que en el Taller 1; el sitio no devolvió el resto aun dividiendo la consulta por rangos de precio (VTEX no pagina más de 2.500 resultados por consulta). El alcance queda registrado en la tabla `ejecuciones` (`detalle`).
+En el Taller 1 el análisis usó **Jumbo, Locatel y Éxito**. En la ejecución del 13 de noviembre de 2026 **Éxito bloqueó la extracción** (`HTTP 403` en el árbol de categorías), por lo que se **reemplazó por Carulla**, también del Grupo Éxito, con catálogo casi idéntico. Se garantizó de nuevo la cobertura: la base marca 36 productos comparables con observación en los tres comercios y presentación idéntica (se detectaron 41 por identificador, pero 5 tenían contenido distinto entre comercios y se corrigieron como no comparables; ver `correcciones`). Carulla salió **parcial** (2.596 de 3.026 productos en «Afeitadoras»), igual que en el Taller 1; el sitio no devolvió el resto aun dividiendo la consulta por rangos de precio (VTEX no pagina más de 2.500 resultados por consulta). El alcance queda registrado en la tabla `ejecuciones` (`detalle`).
 
 ## Vistas SQL
 
@@ -89,7 +89,7 @@ La aplicación consulta directamente tres vistas (además de `v_obs` del Taller 
 
 ## Hallazgos
 
-Base: 36 productos comparables con contenido consistente en los tres comercios (Locatel, Jumbo y Carulla). Se excluyen cinco que la base marca como comparables pero cuyo contenido o unidad difiere entre comercios (por ejemplo, espuma Gillette Sensitive: 150 g en dos comercios y 155 mL en Jumbo). Ejecuciones: `run-20261113T174237` (13-nov-2026) y `run-20261024T221730` (24-oct-2026). Precios en COP al momento de la captura.
+Base: 36 productos comparables con contenido consistente en los tres comercios (Locatel, Jumbo y Carulla). Otros cinco que coincidían por identificador se corrigieron como no comparables porque su contenido o unidad difiere entre comercios (por ejemplo, espuma Gillette Sensitive: 150 g en dos comercios y 155 mL en Jumbo); la corrección queda en la tabla `correcciones`. Ejecuciones: `run-20261113T174237` (13-nov-2026) y `run-20261024T221730` (24-oct-2026). Precios en COP al momento de la captura.
 
 1. **Ninguno es el más barato en todas las fechas.** El 13 de noviembre, Locatel tuvo el menor precio en 26 de los 36 productos (Carulla en 9 y Jumbo en 3, contando empates); el 24 de octubre el orden fue otro: Jumbo en 17, Locatel en 14 y Carulla en 4. Comprar los 36 productos solo en Locatel costaba $1.117.033 el 13-nov, frente a $1.274.045 en Carulla y $1.338.210 en Jumbo; el 24-oct (35 productos con precio en los tres) Jumbo era el más barato con $1.257.450, frente a $1.330.100 en Locatel y $1.381.190 en Carulla.
 2. **La ventaja de Locatel coincide con sus promociones.** El 13-nov, 28 de los 36 productos estaban en promoción en Locatel, frente a 4 en Carulla y 0 en Jumbo. Entre ambas ejecuciones, 28 de los 36 precios de Locatel bajaron (−22,4 % en promedio), mientras en Jumbo 12 subieron (+22 % en promedio) y 7 bajaron. Son precios de la captura, no permanentes.

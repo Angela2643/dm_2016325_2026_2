@@ -157,3 +157,21 @@ def test_canasta_incompleta():
     # si un producto no tiene precio en ningún comercio, no hay canasta ideal
     r2 = analisis.calcular_canasta(precios, {1: 1, 99: 1})
     assert r2["costo_ideal"] is None and r2["sin_precio"] == [99]
+
+
+# ----------------------------------------------------------------------------
+# 7. Presentaciones distintas con el mismo identificador no son comparables
+# ----------------------------------------------------------------------------
+def test_presentacion_inconsistente_no_comparable(con):
+    con.execute("INSERT INTO ejecuciones (id, corrida_id, inicio, comercio, modo, n_registros, estado) VALUES (3,'r2','2026-11-01T10:00:00-05:00','Olímpica','online',1,'completa')")
+    con.execute("INSERT INTO ejecuciones (id, corrida_id, inicio, comercio, modo, n_registros, estado) VALUES (4,'r2','2026-11-01T10:00:00-05:00','Éxito','online',1,'completa')")
+    # tres comercios, mismo EAN, el tercero con otra presentación (150 g vs 155 mL)
+    for com, sku, precio, texto, eid in [("La Rebaja", "a", 10000.0, "Espuma 150 g", 2),
+                                         ("Olímpica", "b", 11000.0, "Espuma 150 g", 3),
+                                         ("Éxito", "c", 12000.0, "Espuma 155 ml", 4)]:
+        f = fila(comercio=com, sku=sku, precio=precio, fecha="2026-11-01T10:00:00-05:00")
+        f.update(ean="7500435188470", nombre_original=texto, texto_original=texto)
+        scraper._insertar(con, f, eid)
+    scraper.asignar_correspondencia(con, "r2")
+    assert con.execute("SELECT COUNT(*) FROM productos WHERE comparable=1").fetchone()[0] == 0
+    assert con.execute("SELECT COUNT(*) FROM correcciones").fetchone()[0] == 1
