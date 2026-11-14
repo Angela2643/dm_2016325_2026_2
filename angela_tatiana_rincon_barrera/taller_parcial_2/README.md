@@ -2,7 +2,7 @@
 
 **Asignatura:** Minería de Datos (2016325) · **Lenguaje:** Python 3.13 (scraping, acceso a datos, aplicación y pruebas) · **Marco:** Streamlit
 
-**Aplicación publicada:** ENLACE_DE_LA_APLICACION
+**Aplicación publicada:** https://comparador-solares.streamlit.app/
 
 La aplicación convierte el comparador del Taller 1 en una herramienta web que consulta la base SQLite, la actualiza mediante el mismo web scraping y orienta al consumidor sobre dónde comprar un producto o una canasta de productos.
 
