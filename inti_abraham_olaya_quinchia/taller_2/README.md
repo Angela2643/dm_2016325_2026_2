@@ -6,7 +6,7 @@
 
 ## Aplicación publicada
 
-**Enlace:** PENDIENTE — pegar aquí la URL de Streamlit Community Cloud una vez desplegada.
+**Enlace:** https://inti-comparador-precios.streamlit.app/
 
 Notas de la versión publicada:
 - Las plataformas gratuitas **no conservan los cambios en la base** al reiniciarse la aplicación: lo que se actualice desde el botón se pierde al reiniciar. La actualización persistente funciona en la ejecución local.
