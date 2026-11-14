@@ -35,6 +35,16 @@ pytest tests/
 
 Seis pruebas (`tests/test_app.py`) con una base SQLite en memoria y datos simulados: conversión de precios, normalización de unidades, ahorro con empates, unicidad al insertar, detección de cambios y canasta incompleta.
 
+## Informe final (Quarto)
+
+Desde `taller_2/` (requiere [Quarto](https://quarto.org) y `pip install jupyter plotly`):
+
+```bash
+quarto render informe_taller_2.qmd
+```
+
+Genera `informe_taller_2.html` autocontenido con las consultas SQL, los gráficos y los hallazgos.
+
 ## Estructura
 
 ```text
@@ -52,6 +62,7 @@ taller_2/
 ├── migrar_db.py              # migración del esquema (correcciones, vistas, índices)
 ├── comparador_precios.sqlite # base con 2 ejecuciones completas (24-oct y 13-nov-2026)
 ├── diccionario_datos.md      # tablas, vistas y columnas
+├── informe_taller_2.qmd      # informe final (Quarto), lee la base en solo lectura
 ├── raw/<comercio>/<fecha>/   # copias crudas (.json.gz) + meta.json.gz
 ├── tests/test_app.py
 └── requirements.txt
