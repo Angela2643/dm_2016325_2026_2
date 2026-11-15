@@ -436,5 +436,6 @@ Se utilizó además **Claude Code (Anthropic, modelo Claude Opus 5.5)** para:
   `server.R` y `global.R` (`lista_comparables`, `rango_fechas_observadas`,
   `precio_maximo_observado`, `contar_comparables`,
   `contar_observaciones_comparables`), para que la interfaz no contenga SQL.
-- **Creacion de las pruebas:** Correr pruebas para cumplir con los requisitos 
+- **Creacion de las pruebas:** Correr pruebas para cumplir con los requisitos
+- **Estructura del proyecto:** Organizacion las carpetas y la aplicacion.  
 
