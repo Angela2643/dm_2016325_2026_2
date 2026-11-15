@@ -3,7 +3,7 @@
 test_that("volver a insertar el mismo lote no agrega observaciones", {
   archivo <- tempfile(fileext = ".sqlite")
   con <- crear_base(archivo)
-  on.exit({ DBI::dbDisconnect(con); unlink(archivo) })
+  withr::defer({ DBI::dbDisconnect(con); unlink(archivo) })
   fecha <- "2026-10-01T10:05:00-05:00"
   filas <- rbind(anuncio("locatel", "a", "Ensure Advance Vainilla Polvo x 400 gr", 80000, fecha = fecha),
                  anuncio("locatel", "b", "Glucerna Vainilla Liquido x 237 ml", 15000, fecha = fecha),

@@ -103,6 +103,10 @@ actualizacion_server <- function(id, db = "comparador_precios.sqlite", al_termin
                    strong("La actualización no pudo completarse. "), res$error))
       }
       r <- res$r
+      if (!is.null(r$bloqueo)) {
+        return(div(class = "alert alert-warning mt-3",
+                   strong("No se actualizó. "), r$bloqueo))
+      }
       fecha <- fecha_corrida(r$corrida)
       if (isTRUE(r$sitios_inaccesibles)) {
         return(div(class = "alert alert-warning mt-3",
@@ -119,7 +123,7 @@ actualizacion_server <- function(id, db = "comparador_precios.sqlite", al_termin
 
     output$resumen <- renderTable({
       res <- resultado()
-      req(res, res$ok)
+      req(res, res$ok, is.null(res$r$bloqueo))
       x <- res$r$resumen
       guion <- function(v) ifelse(is.na(v), "—", format(v, big.mark = ".", decimal.mark = ","))
       data.frame(

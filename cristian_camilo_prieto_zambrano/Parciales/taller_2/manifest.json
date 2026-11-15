@@ -4261,7 +4261,7 @@
       "checksum": "7bf5abecdee370735f5b8c22fe7f0206"
     },
     ".Rprofile": {
-      "checksum": "a8ad86fc25fb89014e8a18af2fa0c756"
+      "checksum": "c643df11a15a315a31554ea635b8f2c9"
     },
     "app.R": {
       "checksum": "2fb54b23ad87cc37d89a882146f62a1a"
@@ -4279,7 +4279,7 @@
       "checksum": "6f2d5deceba190194e520d38e1c8679b"
     },
     "db.R": {
-      "checksum": "203f3ca0a7bf76d03dc6c0bed663ac2b"
+      "checksum": "76c9b8773e90a1394b03964e6451befe"
     },
     "diccionario_datos.md": {
       "checksum": "7cdffdb8ac0f689518fe37e0cfc29571"
@@ -4288,7 +4288,7 @@
       "checksum": "58f2a5cc4d5a280bd1cc1ed60c6aecc8"
     },
     "modulo_actualizacion.R": {
-      "checksum": "a9cd713a1fcabe6d95a142d0eba91c14"
+      "checksum": "0385d29fa77b996293ec29bc51754e9b"
     },
     "raw/cruzverde/20261010T213019/nutricion_p0000_busqueda__2026-10-10T213141-0500.json.gz": {
       "checksum": "0e471e66725acb6d50e7cdb3c23fe519"
@@ -4603,13 +4603,13 @@
       "checksum": "2642ffb7241872526889561ced8574ea"
     },
     "README.md": {
-      "checksum": "cde8d9c77737b2ca3f18671c245373b1"
+      "checksum": "b6b014d65c0e671d267fb679d4e21301"
     },
     "renv.lock": {
       "checksum": "310fb887551f403fcbc9ded539d1ec92"
     },
     "scraper.R": {
-      "checksum": "c8854454ae5dd729559cd0e691607e61"
+      "checksum": "510e3f1b2c506605dfddead3f6d58d65"
     },
     "tema.R": {
       "checksum": "bf4c1114eb550b4295964a9b72ef4e33"

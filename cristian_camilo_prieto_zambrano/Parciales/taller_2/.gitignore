@@ -16,6 +16,9 @@ prueba_*.sqlite
 respaldo_*.sqlite
 *.sqlite-journal
 
+# Candado de una actualización en curso (lo crea y lo borra la aplicación)
+actualizacion_en_curso.lock/
+
 # Informes generados en la consola
 validacion_*.html
 informe_validacion.html

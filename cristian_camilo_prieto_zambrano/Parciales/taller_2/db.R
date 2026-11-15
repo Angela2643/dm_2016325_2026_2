@@ -1049,6 +1049,13 @@ corrida_referencia <- function(con, f = list()) {
   if (nrow(r) == 0) NA_character_ else r$corrida
 }
 
+# Inicio de la última actualización en línea, de cualquier comercio y con
+# cualquier resultado (también las fallidas: un intento cuenta igual para no
+# insistir contra un sitio). NA si no hay ninguna.
+ultima_actualizacion_en_linea <- function(con) {
+  dbGetQuery(con, "SELECT MAX(inicio) AS inicio FROM ejecuciones WHERE modo = 'en_linea'")$inicio
+}
+
 # Las dos corridas más recientes con datos de dos o más comercios (anterior, actual)
 corridas_recientes <- function(con) {
   r <- dbGetQuery(con, "

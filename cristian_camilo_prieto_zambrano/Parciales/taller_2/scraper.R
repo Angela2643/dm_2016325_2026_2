@@ -1119,9 +1119,68 @@ ejecutar_recoleccion <- function(db = "comparador_precios.sqlite",
                  validaciones = validaciones))
 }
 
+# -----------------------------------------------------------------------------
+# Actualización desde la aplicación
+#
+# La aplicación publicada es pública: cualquier visitante puede pulsar
+# "Actualizar precios". Para no sobrecargar los sitios de los comercios:
+#   - entre dos actualizaciones en línea deben pasar al menos
+#     ESPERA_EN_LINEA_MIN minutos (cuenta cualquier intento, también los
+#     fallidos). El modo sin conexión no tiene límite;
+#   - solo corre una actualización a la vez: un candado (una carpeta, que se
+#     crea de forma atómica) marca la que está en curso. Un candado de más de
+#     CANDADO_MAX_MIN minutos se considera abandonado (por ejemplo, tras un
+#     reinicio del servidor) y se reemplaza.
+# ejecutar_recoleccion() desde la consola no tiene estas restricciones.
+# -----------------------------------------------------------------------------
+ESPERA_EN_LINEA_MIN <- 60
+CANDADO_MAX_MIN     <- 30
+
+leer_fecha_iso <- function(x) {
+  as.POSIXct(sub("([+-]\\d{2}):(\\d{2})$", "\\1\\2", x), format = "%Y-%m-%dT%H:%M:%S%z", tz = ZONA)
+}
+
+# Minutos que faltan para poder actualizar en línea (0 si ya se puede)
+espera_en_linea <- function(db, minutos = ESPERA_EN_LINEA_MIN, ahora = Sys.time()) {
+  con <- dbConnect(SQLite(), db)
+  on.exit(dbDisconnect(con))
+  ultima <- ultima_actualizacion_en_linea(con)
+  if (is.na(ultima)) return(list(minutos = 0, ultima = NA, proxima = NA))
+  t <- leer_fecha_iso(ultima)
+  restante <- max(0, minutos - as.numeric(difftime(ahora, t, units = "mins")))
+  list(minutos = ceiling(restante), ultima = t, proxima = t + minutos * 60)
+}
+
+tomar_candado <- function(ruta, max_min = CANDADO_MAX_MIN) {
+  if (dir.exists(ruta)) {
+    edad <- as.numeric(difftime(Sys.time(), file.info(ruta)$mtime, units = "mins"))
+    if (edad < max_min) return(FALSE)
+    unlink(ruta, recursive = TRUE)            # candado abandonado
+  }
+  dir.create(ruta, showWarnings = FALSE)      # FALSE si otro proceso lo tomó primero
+}
+
 # Versión para la aplicación: lo que devuelve son solo tablas (se ejecuta en
-# otro proceso y el resultado vuelve a la aplicación).
+# otro proceso y el resultado vuelve a la aplicación). Si no se puede
+# actualizar, devuelve el motivo en $bloqueo sin consultar los sitios.
 actualizar_precios <- function(db = "comparador_precios.sqlite", offline = FALSE, corrida = NULL) {
+  hora <- function(t) format(t, "%H:%M", tz = ZONA)
+  if (!offline) {
+    e <- espera_en_linea(db)
+    if (e$minutos > 0) {
+      return(list(bloqueo = sprintf(paste(
+        "La última actualización en línea fue a las %s. Para no sobrecargar los sitios de los",
+        "comercios, la siguiente está disponible desde las %s (en %d min). Mientras tanto",
+        "puede usar el modo sin conexión."), hora(e$ultima), hora(e$proxima), e$minutos)))
+    }
+  }
+  candado <- file.path(dirname(db), "actualizacion_en_curso.lock")
+  if (!tomar_candado(candado)) {
+    return(list(bloqueo = sprintf(
+      "Ya hay una actualización en curso (iniciada a las %s). Espere a que termine.",
+      hora(file.info(candado)$mtime))))
+  }
+  on.exit(unlink(candado, recursive = TRUE), add = TRUE)
   r <- ejecutar_recoleccion(db = db, offline = offline, corrida = corrida, devolver_agentes = FALSE)
   r$validaciones <- NULL
   r
