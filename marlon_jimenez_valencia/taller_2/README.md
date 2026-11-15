@@ -11,7 +11,7 @@ antimicóticos sistémicos y antiparasitarios), la misma del Taller 1.
 
 ## Aplicación publicada
 
-**Enlace:** [PENDIENTE: enlace de Streamlit Community Cloud]
+**Enlace:** https://marlonjimenezvalencia-7qyng7cxsviahpst75gmnp.streamlit.app
 
 - La plataforma gratuita no conserva los cambios en la base cuando la aplicación se reinicia. Una
   actualización hecha en la versión publicada se pierde al reiniciar; la base del repositorio es la
