@@ -3,7 +3,7 @@
 Aplicación web que consulta la base del Taller 1, la actualiza con el scraper y ayuda a decidir dónde comprar productos de nutrición deportiva (proteínas, creatina, aminoácidos, preentrenos, geles, barras y bebidas deportivas) en Éxito, Farmatodo y Locatel, con precios de Bogotá.
 
 - **Lenguaje:** Python, con Streamlit para la aplicación. Todo el proceso (scraping, acceso a datos, aplicación y pruebas) está en Python.
-- **Aplicación publicada:** https://comparador-nutricion-lucio.streamlit.app
+- **Aplicación publicada:** https://comparador-nutricion-lmunozad.streamlit.app/
 
 ## Ejecutar localmente
 
