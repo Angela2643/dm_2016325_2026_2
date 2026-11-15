@@ -1,0 +1,10 @@
+.Renviron
+.RData
+.Rhistory
+.Rproj.user/
+rsconnect/
+renv/library/
+renv/local/
+renv/staging/
+renv/sandbox/
+*.tmp
