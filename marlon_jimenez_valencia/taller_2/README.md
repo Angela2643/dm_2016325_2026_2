@@ -28,18 +28,18 @@ antimicóticos sistémicos y antiparasitarios), la misma del Taller 1.
 | Página | Qué muestra |
 |---|---|
 | **Resumen** | 8 indicadores calculados con SQL (con su unidad y su periodo) y 4 gráficos interactivos: evolución del precio de un comparable, precio por unidad de contenido, distribución de precios y "¿Dónde es más barato?" |
-| **Productos** | Tabla de los productos filtrados: comercio, nombre, marca, presentación, precio, precio unitario, promoción, disponibilidad, fecha de consulta y enlace al anuncio. Se puede ordenar, buscar y descargar en CSV |
+| **Productos** | Tabla de los productos filtrados: comercio, marca, nombre, presentación, precio, precio unitario, promoción, disponibilidad, fecha de consulta y enlace al anuncio. Se puede ordenar, buscar y descargar en CSV |
 | **Cambios de precio** | Compara dos ejecuciones (por defecto, las dos completas más recientes): qué subió o bajó (en COP y en %), qué es nuevo y qué dejó de observarse, con un umbral que resalta las variaciones grandes |
-| **Canasta** | Costo de una canasta de comparables en cada comercio (solo si el comercio tiene todos los productos), costo mínimo combinando comercios y ahorro |
+| **Canasta** | Costo de una canasta de comparables en cada comercio (En caso de que el comercio tiene todos los productos), costo mínimo combinando comercios y ahorro |
 | **Actualizar precios** | Botón que llama a `scraper.py` (en línea o sin conexión), muestra el avance por comercio con `st.status` y al final un resumen por comercio |
 | **Calidad de los datos** | Ejecuciones, disponibilidad, resultado de las validaciones, rechazos, correcciones y copias crudas |
 
 Los filtros de la barra lateral (en Resumen y Productos) se pueden combinar: comercio, ejecución o
 rango de fechas, subcategoría, marca, rango de precio, solo promociones, solo comparables y búsqueda
 por palabras en el nombre o en el texto original del anuncio. Cada comercio tiene siempre el mismo
-color, y cada gráfico tiene una tabla con sus datos ("Ver los datos del gráfico").
+color, y cada gráfico tiene una tabla con sus respectivos datos ("Ver los datos del gráfico").
 
-## Cómo ejecutarla localmente
+## Cómo se puede ejecutar localmente
 
 Desde la carpeta `taller_2`:
 
@@ -62,7 +62,7 @@ Desde la carpeta `taller_2`, con el entorno activado:
 pytest tests/
 ```
 
-Son 30 casos en 13 funciones de prueba, que cubren lo que pide el enunciado:
+Son 30 casos en 13 funciones de prueba, que cubren todo lo que pide el enunciado:
 
 | Lo que se prueba | Archivo |
 |---|---|
@@ -98,9 +98,9 @@ Cada actualización:
 
 1. Registra una ejecución nueva.
 2. Valida las observaciones con `validacion.py` (pandera).
-3. Inserta solo las que no existen, en una transacción por comercio.
+3. Inserta unicamente las que no existen, en una transacción por comercio.
 
-Si un comercio falla, sigue con los demás y deja ese comercio como `parcial` o `fallida`, con el
+Si un comercio falla, continua con los demás y deja ese comercio como `parcial` o `fallida` para mejor comprension, con el
 motivo.
 
 ## Estructura de archivos
@@ -133,13 +133,13 @@ taller_2/
 ```
 
 Todas las rutas son relativas a la carpeta del archivo que las usa (`Path(__file__)`), así que la
-aplicación funciona desde cualquier computador.
+aplicación funciona desde un computador cualquiera, independientemente.
 
 ## Base de datos
 
 ### Ejecuciones
 
-La base tiene **3 ejecuciones completas en los tres comercios**, en fechas distintas:
+La base tiene **3 ejecuciones completas en los tres comercios**, en fechas diferentes:
 
 | Ejecución | Fecha | Origen | Observaciones |
 |---|---|---|---|
@@ -147,7 +147,7 @@ La base tiene **3 ejecuciones completas en los tres comercios**, en fechas disti
 | `E20261009T235057` | 9 oct 2026 | Taller 1 (ejecución de referencia de esa entrega) | 897 |
 | `E20261108T110310` | 8 nov 2026 | Taller 2 | 954 |
 
-Las ejecuciones parciales y fallidas también se conservan (por ejemplo, `E20261108T094725`, en la
+Las ejecuciones parciales y fallidas tambien se  conservan (ejemplo, `E20261108T094725`, en la
 que Cafam quedó `parcial`). Así queda el historial completo de lo que pasó; la página **Calidad de
 los datos** las muestra todas. En total hay 5.932 observaciones de 972 anuncios.
 
@@ -164,9 +164,9 @@ agotados.
 ### Vistas SQL
 
 La aplicación consulta seis de estas vistas directamente, desde `db.py`. El detalle de cada
-columna está en [`diccionario_datos.md`](diccionario_datos.md).
+columna se localiza en [`diccionario_datos.md`](diccionario_datos.md).
 
-| Vista | Qué devuelve | Dónde se usa (función de `db.py`) |
+| Vista | Qué devuelve? | Dónde se usa? (función de `db.py`) |
 |---|---|---|
 | `v_observaciones` | Cada observación unida con su anuncio, comercio y comparable, más el precio unitario | Filtros, indicadores, tabla de productos y gráficos (`_consulta_filtrada`) |
 | `v_cambios_precio` | Cambios de precio entre observaciones consecutivas del mismo anuncio (`LAG`) | Indicador "Cambios de precio" del Resumen (`cambios_en_ejecucion`) |
@@ -178,7 +178,7 @@ columna está en [`diccionario_datos.md`](diccionario_datos.md).
 
 ### Corrección de la base del Taller 1
 
-`preparar_base.py` copió todas las filas de la base del Taller 1 sin modificar el archivo original.
+`preparar_base.py` copió todas las filas de la base del Taller 1 sin modificar el archivo original, estuvo todo en orden.
 Luego corrigió los campos y reprocesó las copias de `raw/` con las reglas actuales. Cada cambio
 quedó en la tabla `correcciones`, con fecha, registro, valor anterior, valor nuevo y motivo:
 
@@ -203,7 +203,7 @@ mostrar sus productos:
 
 Cada respuesta se guarda comprimida en `raw/<comercio>/<AAAA-MM-DD>/<id_ejecucion>/`, junto con un
 `manifest.json` de la ejecución. Cada observación tiene `id_ejecucion` y `url_extraccion`, así que
-se puede rastrear hasta su copia cruda. El modo sin conexión reconstruye los datos solo desde
+se es posible rastrearlo hasta su copia cruda. El modo sin conexión reconstruye los datos unicamente desde
 `raw/`.
 
 **Buenas prácticas de scraping:**
@@ -229,7 +229,7 @@ elegidos, ¿dónde suele estar más barato?
 **Cómo se calcula** (`db.mas_barato_mismo_ean`):
 
 1. Se toman los productos disponibles con el mismo EAN válido y con precio en todos los comercios
-   elegidos. Los agotados no cuentan aunque el sitio conserve su precio, porque no se pueden
+   elegidos. Los agotados no cuentan a pesar de que el sitio conserve su precio, porque no se pueden
    comprar (el mismo criterio de la canasta, del ahorro máximo y del precio por unidad).
 2. Para cada producto se busca el comercio con el menor precio.
 3. Se cuenta cuántas veces gana cada comercio. Si hay empate en el mínimo, el producto cuenta como
@@ -238,28 +238,29 @@ elegidos, ¿dónde suele estar más barato?
 A diferencia del gráfico de precio por unidad, que usa solo los 10 comparables, este gráfico compara
 todos los productos idénticos que venden los tres comercios.
 
-**Por qué responde una pregunta del consumidor:** ayuda a decidir en qué droguería buscar primero
+**Por qué responde una pregunta del consumidor:** ayuda a tomar la decision de en qué droguería buscar de manera primaria
 cuando ya se sabe exactamente qué producto se necesita, por ejemplo cuando la fórmula médica indica
 una marca y una presentación. El código de barras (EAN) identifica un producto exacto (mismo
 laboratorio, concentración, forma y cantidad), así que se comparan productos idénticos y no nombres
-parecidos que podrían ser presentaciones distintas. Solo cuentan los productos disponibles, porque
-un producto agotado no se puede comprar aunque el sitio muestre su precio.
+parecidos que podrían ser presentaciones distintas. Solo cuentan los productos que esten disponibles, porque
+un producto agotado no se puede comprar aunque el sitio arroge su precio.
 
-El gráfico tiene límites: cuenta cuántas veces gana cada comercio, pero no cuánto se ahorra (para
+El gráfico tiene algunos límites: cuenta cuántas veces gana cada comercio, pero no cuánto se ahorra (para
 eso están el indicador de ahorro máximo, el precio por unidad y la canasta); deja por fuera los
 productos que vende un solo comercio; y muestra una sola ejecución, es decir, los precios de una
 fecha.
 
 ## Hallazgos
 
-**Periodo:** del 4 de octubre al 8 de noviembre de 2026. **Ejecuciones completas en los tres
+**Periodo:** de octubre 4 al noviembre 8  del 2026. **Ejecuciones completas en los tres
 comercios:** `E20261004T182736` (4 de octubre), `E20261009T235057` (9 de octubre) y
 `E20261108T110310` (8 de noviembre). Precios en COP con IVA. Cuando se dice "más barato" solo
 cuentan productos disponibles.
 
+
 1. **Para un mismo producto, Locatel suele ser el más barato.** El 8 de noviembre, de los 67
    productos con el mismo código de barras disponibles en los tres comercios, Locatel tiene el
-   precio más bajo en 42 (63 %), La Rebaja en 20 y Cafam en 5. El 9 de octubre Locatel también
+   precio más bajo en 42 (63 %),  La Rebaja en 20 y Cafam en 5. El 9 de octubre Locatel también
    ganaba, pero por menos: 27 de 64, frente a 24 de Cafam y 13 de La Rebaja.
    *Verificar:* Resumen → "¿Dónde es más barato?", eligiendo cada ejecución en la barra lateral.
 
@@ -292,12 +293,11 @@ cuentan productos disponibles.
 ## Declaración de uso de inteligencia artificial
 
 **Herramienta:** Claude Code (modelo Claude Opus 5.5, de Anthropic), en la aplicación de escritorio
-de Claude, trabajando sobre los archivos de mi computador. El módulo de extracción viene del Taller
-1, que también se hizo con Claude Code.
-
-**Para qué partes:** escritura y depuración del código (scraper, capa de datos, interfaz,
-páginas, validación, vistas SQL y pruebas), ejecución de las recolecciones, estilo visual de la
-aplicación y redacción de la documentación (este README y el diccionario
+de Claude, trabajando sobre los archivos de mi computador en la funcion de cowork. El módulo de extracción viene del Taller
+1, el cual tuvo apoyo de code.
+**Para qué partes:** Fue util para la escritura y depuración del código (scraper, capa de datos, interfaz,
+páginas, validación, vistas SQL y pruebas) y asi evitar errores, ejecución de las recolecciones, ayudo a trabajar el estilo visual de la
+aplicación y en la parte de redacción de la documentación tediosa(incluido este README y el diccionario
 de datos).
 
 **Cómo se verificó:**
@@ -315,4 +315,4 @@ Esa revisión encontró dos errores que se corrigieron antes de entregar: Cafam 
 porque el filtro por precio dejaba por fuera los agotados, y los productos agotados contaban como
 "más barato" aunque no se pudieran comprar.
 
-Soy responsable de todo el código entregado y de poder explicarlo.
+Soy responsable de todo el código entregado, en completas capacidades de explicarlo y presentar una explicacion oral de la utilidad de esta apliacion, asi como de como fue confeccionado usando herramientas del curso.
