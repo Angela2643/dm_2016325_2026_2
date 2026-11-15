@@ -2,7 +2,7 @@
 
 - **Asignatura:** Minería de Datos (2016325) — Universidad Nacional de Colombia
 - **Lenguaje de programación:** R (Shiny + `bslib` + `highcharter` + `DT` + SQLite)
-- **Aplicación publicada:** *(Pendiente de despliegue en shinyapps.io — completar tras ejecutar `rsconnect::deployApp()`)*
+- **Aplicación publicada:** *(<https://2sp8pn-miguel0ngel-barreto0zabala.shinyapps.io/documents/>)*
 
 > **Nota sobre despliegue en plataforma gratuita:** En plataformas gratuitas como `shinyapps.io`, el sistema de archivos es efímero y los cambios en `comparador_precios.sqlite` tras una actualización en línea o sin conexión no persisten cuando el contenedor se reinicia. La actualización en línea funciona de forma persistente en la ejecución local; además, si los comercios bloquean peticiones desde la nube o no está configurada `FARMATODO_ALGOLIA_KEY`, la aplicación informa el estado por comercio y permite reprocesar las copias en `raw/` mediante el **modo sin conexión**.
 
