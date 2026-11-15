@@ -1,0 +1,21 @@
+# .gitignore de la carpeta taller_2
+
+# Credenciales: nunca se suben al repositorio (ver .Renviron.example)
+.Renviron
+.streamlit/secrets.toml
+
+# Archivos de sesión de RStudio y R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# Bases de prueba y respaldos locales (la base de la entrega sí se sube:
+# comparador_precios.sqlite)
+prueba_*.sqlite
+respaldo_*.sqlite
+*.sqlite-journal
+
+# Informes generados en la consola
+validacion_*.html
+informe_validacion.html
