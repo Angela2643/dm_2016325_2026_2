@@ -297,7 +297,7 @@ de Claude, trabajando sobre los archivos de mi computador. El módulo de extracc
 
 **Para qué partes:** escritura y depuración del código (scraper, capa de datos, interfaz,
 páginas, validación, vistas SQL y pruebas), ejecución de las recolecciones, estilo visual de la
-aplicación y redacción de la documentación (este README, incluidos los hallazgos, y el diccionario
+aplicación y redacción de la documentación (este README y el diccionario
 de datos).
 
 **Cómo se verificó:**
