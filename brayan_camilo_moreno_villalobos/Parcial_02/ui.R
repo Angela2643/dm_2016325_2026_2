@@ -73,15 +73,29 @@ ui <- page_sidebar(
     
     sliderInput("filtro_precio", "Rango de Precio por Unidad ($):",
                 min = 0, max = 500000, value = c(0, 500000), step = 1000, pre = "$"),
-    
+    dateRangeInput(
+      inputId = "rango_fechas",
+      label = "Fecha de consulta",
+      start = "2026-11-10",       
+      end = "2027-11-10",         
+      separator = " a ",          
+      language = "es",            
+      format = "yyyy-mm-dd"       
+    ),
+    selectInput(
+      inputId = "filtro_ejecucion", 
+      label = "Ejecución", 
+      choices = c("Todos" = "Todos"), # Se llenará automáticamente desde el servidor
+      selected = "Todos"
+    ),
     hr(),
     div(
       class = "p-2 rounded bg-white border",
       h6(icon("database"), " Actualización de Datos", class = "fw-bold mb-1"),
       p("Ejecuta el motor de extracción para obtener los precios de hoy. (Puede tardar varios minutos).", 
         class = "text-muted small mb-2"),
-      actionButton("btn_actualizar", "Ejecutar Scraper Ahora", 
-                   class = "btn-primary w-100", icon = icon("sync"))
+      input_task_button("btn_actualizar", "Ejecutar Scraper Ahora", icon = icon("sync"), class = "btn-primary w-100"),
+      input_switch("modo_offline", "Modo sin conexión, usando archivos locales (usar raw/)", value = FALSE)
     )
   ),
   

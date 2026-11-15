@@ -17,10 +17,7 @@ plan(multisession)
 
 server <- function(input, output, session) {
 
-source("db.R") 
-plan(multisession)
-server <- function(input, output, session) {
-  
+
 
   trigger_actualizacion <- reactiveVal(0)
   
@@ -30,23 +27,45 @@ server <- function(input, output, session) {
   tarea_scraping <- ExtendedTask$new(function(modo_offline, max_paginas) {
     future_promise({
       source("scraper.R", local = TRUE)
-      ejecutar_pipeline(modo_ejecucion_offline = modo_offline, max_pag = max_paginas)
-      return("ok")
+      resumen <- ejecutar_pipeline(modo_ejecucion_offline = modo_offline, max_pag = max_paginas)
+      return(resumen)
     })
   }) |> bind_task_button("btn_actualizar")
   
-  
-  # 2. El clic del botón dispara la tarea
   observeEvent(input$btn_actualizar, {
-    showNotification("Iniciando extracción en segundo plano... Puedes seguir navegando.", 
-                     type = "warning", duration = 8)
+    modo <- isTRUE(input$modo_offline)
+    showNotification(
+      if (modo) "Reprocesando copias locales en raw/..." else "Iniciando extracción en línea en segundo plano...",
+      type = "warning", duration = 8
+    )
+    tarea_scraping$invoke(modo_offline = modo, max_paginas = 60)
+  })
+  
+  observeEvent(tarea_scraping$status, {
+    estado_actual <- tarea_scraping$status()
     
-    tarea_scraping$invoke(modo_offline = TRUE, max_paginas = 2)
+    if (estado_actual == "success") {
+      showNotification("¡Actualización exitosa! Revisa el resumen por comercio.",
+                       type = "message", duration = 10)
+      trigger_actualizacion(isolate(trigger_actualizacion()) + 1)
+    } else if (estado_actual == "error") {
+      error_msg <- tarea_scraping$error()$message
+      showNotification(
+        paste("Error durante la extracción:", error_msg,
+              "| Si estás en el servidor publicado, activa 'Modo sin conexión (raw/)'."),
+        type = "error", duration = NULL
+      )
+    }
+  }, ignoreInit = TRUE)
+  
+  output$resumen_scraping <- renderTable({
+    req(tarea_scraping$status() == "success")
+    tarea_scraping$result()
   })
   
   
   # 3. Escuchar los cambios de ESTADO de la tarea de forma segura
-  observeEvent(tarea_scraping$status(), {
+  observeEvent(tarea_scraping$status, {
     estado_actual <- tarea_scraping$status()
     
     if (estado_actual == "success") {
@@ -73,11 +92,17 @@ server <- function(input, output, session) {
     opts <- obtener_opciones_filtros()
     updateSelectizeInput(session, "filtro_marca", choices = opts$marcas, server = TRUE)
     updateCheckboxGroupInput(session, "filtro_mascota", choices = opts$mascotas, selected = opts$mascotas)
-  })
-  # --- 2. TABLA: ÚLTIMOS PRECIOS (Consulta parametrizada completa) ---
+  
+    df_ej <- obtener_ejecuciones()
+    opciones_ej <- setNames(c("Todos", df_ej$id_ejecucion), c("Todos", df_ej$fecha_inicio))
+    updateSelectInput(session, "filtro_ejecucion", choices = opciones_ej)
+    })
+
   datos_precios <- reactive({
     trigger_actualizacion()
     req(length(input$filtro_comercio) > 0) 
+    req(length(input$rango_fechas) == 2)
+    req(input$filtro_ejecucion)
     
     obtener_precios_filtrados(
       comercios_seleccionados = input$filtro_comercio,
@@ -85,16 +110,20 @@ server <- function(input, output, session) {
       mascotas_sel = input$filtro_mascota,
       texto_busqueda = input$filtro_texto,
       precio_min = input$filtro_precio[1], 
-      precio_max = input$filtro_precio[2]
+      precio_max = input$filtro_precio[2],
+      fecha_inicio = as.character(input$rango_fechas[1]),
+      fecha_fin = as.character(input$rango_fechas[2]),
+      ejecucion_sel = input$filtro_ejecucion
     )
   })
   
-  # --- 4. INDICADORES EN TARJETAS VALUE_BOX (6 INDICADORES SQL) ---
+  # --- 4. INDICADORES EN TARJETAS VALUE_BOX---
   output$tarjetas_indicadores <- renderUI({
     trigger_actualizacion()
     ind <- obtener_indicadores()
     
     tagList(
+      # Fila 1: Métricas de Mercado
       layout_columns(
         col_widths = c(4, 4, 4),
         value_box(
@@ -102,24 +131,25 @@ server <- function(input, output, session) {
           value = ind$n_comparables,
           showcase = icon("tags"),
           theme = "primary",
-          p("Presentes en los 3 comercios")
+          p(ind$desglose_comercios, class = "small mb-0 fw-medium")
         ),
         value_box(
           title = "Comercio Más Económico",
           value = ind$comercio_economico,
           showcase = icon("trophy"),
           theme = "success",
-          p("Menor precio unitario promedio")
+          p(ind$prom_economico, class = "small mb-0 fw-medium")
         ),
         value_box(
           title = "Ahorro Potencial Promedio",
           value = paste0(ind$ahorro_promedio, "%"),
           showcase = icon("piggy-bank"),
           theme = "info",
-          p("Diferencia entre precio máx. y mín.")
+          p(paste0("Equivale a $", ind$ahorro_pesos, " COP por producto"), class = "small mb-0 fw-medium")
         )
       ),
       br(),
+      # Fila 2: Métricas de Infraestructura y Trazabilidad
       layout_columns(
         col_widths = c(4, 4, 4),
         value_box(
@@ -127,29 +157,76 @@ server <- function(input, output, session) {
           value = format(ind$n_historial, big.mark = "."),
           showcase = icon("database"),
           theme = "secondary",
-          p("Total precios capturados")
+          p(paste0("Sobre ", ind$n_anuncios_tot, " anuncios rastreados"), class = "small mb-0 fw-medium")
         ),
         value_box(
           title = "Ejecuciones del Scraper",
           value = ind$n_ejecuciones,
           showcase = icon("robot"),
           theme = "warning",
-          p("Corridas registradas en BD")
+          p(paste0("Monitoreo activo desde ", ind$primera_fecha), class = "small mb-0 fw-medium")
         ),
         value_box(
           title = "Última Actualización",
           value = ind$ultima_fecha,
           showcase = icon("clock"),
           theme = "dark",
-          p("Fecha más reciente en BD")
+          p(paste0("Cobertura de ", ind$n_marcas, " marcas comparables"), class = "small mb-0 fw-medium")
+        )
+      ),
+      br(),
+      # Fila 3: Panel de Movimientos de Precio (Última vs Penúltima corrida)
+      div(
+        class = "card bg-white",
+        div(
+          class = "card-header fw-bold text-primary d-flex justify-content-between align-items-center",
+          span(icon("arrow-trend-up", class = "me-2"), "Dinámica de Precios (Última ejecución vs. anterior)"),
+          span(class = "badge bg-light text-dark border", paste0("Período: ", ind$ultima_fecha))
+        ),
+        div(
+          class = "card-body py-3",
+          fluidRow(
+            column(4, class = "text-center border-end",
+                   h3(class = "fw-bold text-danger mb-0", ind$subidas),
+                   span(class = "text-muted small", icon("arrow-up"), " Subieron de precio")),
+            column(4, class = "text-center border-end",
+                   h3(class = "fw-bold text-success mb-0", ind$bajadas),
+                   span(class = "text-muted small", icon("arrow-down"), " Bajaron de precio")),
+            column(4, class = "text-center",
+                   h3(class = "fw-bold text-secondary mb-0", ind$iguales),
+                   span(class = "text-muted small", icon("minus"), " Sin variación"))
+          )
         )
       )
     )
   })
   
   output$tabla_precios <- renderDT({
-    datatable(datos_precios(),
+    df <- datos_precios()
+    names(df) <- tolower(names(df))
+    if (nrow(df) > 0) {
+      
+      comercio_txt <- tolower(trimws(as.character(df$comercio)))
+      anuncio_txt <- as.character(df$id_anuncio)
+      
+      
+      base_url <- ifelse(comercio_txt == "exito", "https://www.exito.com",
+                         ifelse(comercio_txt == "jumbo", "https://www.tiendasjumbo.co",
+                                ifelse(comercio_txt == "olimpica", "https://www.olimpica.com", "")))
+      
+      
+      df$enlace <- ifelse(
+        base_url != "",
+        paste0('<a href="', base_url, anuncio_txt, '" target="_blank" style="color:#0d6efd; font-weight:500; text-decoration:underline;">ver anuncio</a>'),
+        "No disponible"
+      )
+    } else {
+      # Aseguramos que la columna exista incluso si la tabla filtrada queda con 0 filas
+      df$enlace <- character(0)
+    }
+    datatable(df,
               options = list(pageLength = 10, scrollX = TRUE),
+              escape = FALSE,
               rownames = FALSE,
               colnames = c("ID Homologado", "Anuncio", "Comercio", "Marca", 
                            "Descripción Original", "Presentación", "Precio Etiqueta", 
@@ -238,7 +315,11 @@ server <- function(input, output, session) {
   output$grafico_evolucion <- renderHighchart({
     req(input$producto_elegido) 
     
-    df_hist <- obtener_historico_producto(input$producto_elegido)
+    df_hist <- obtener_historico_producto(
+      input$producto_elegido,
+      fecha_inicio = as.character(input$rango_fechas[1]),
+      fecha_fin = as.character(input$rango_fechas[2])
+    )
     req(nrow(df_hist) > 0)
     
     # 1. Asegurar formato numérico
@@ -508,5 +589,5 @@ server <- function(input, output, session) {
               rownames = FALSE,
               colnames = c("Supermercado", "Disponibilidad de Canasta", "Costo Total (COP)", "Sobrecosto vs Óptimo (COP)")) %>%
       formatCurrency(c("Total_COP", "Ahorro_vs_Unico"), currency = "$", interval = 3, mark = ".", digits = 0)
-  })
+    })
 }

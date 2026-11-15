@@ -178,16 +178,27 @@ obtener_opciones_filtros <- function() {
 }
 
 # Consulta parametrizada con filtros completos (comercio, marca, mascota, precio y texto)
-obtener_precios_filtrados <- function(comercios_seleccionados, marcas_sel = NULL, mascotas_sel = NULL, texto_busqueda = "", precio_min = 0, precio_max = 250000) {
+obtener_precios_filtrados <- function(comercios_seleccionados, marcas_sel = NULL, mascotas_sel = NULL, texto_busqueda = "", precio_min = 0, precio_max = 500000, fecha_inicio = "2000-01-01", fecha_fin = "2099-12-31", ejecucion_sel = "Todos") {
   con <- conectar_db()
   
-  sql_base <- "
+  if (ejecucion_sel == "Todos") {
+    base_sql <- "v_ultimo_precio u"
+  } else {
+    base_sql <- "(SELECT a.id_homologado, p.id_anuncio, com.comercio, a.marca, a.texto_original AS presentacion_original, c.presentacion_estandar, p.precio, p.precio_x_und, p.fecha_consulta, p.id_ejecucion
+                 FROM precios_historial p
+                 JOIN anuncios a ON p.id_anuncio = a.id_anuncio
+                 JOIN comercios com ON a.id_comercio = com.id_comercio
+                 JOIN v_comparables c ON a.id_homologado = c.id_homologado) u"
+  }
+  
+  sql_base <- paste0("
     SELECT u.* 
-    FROM v_ultimo_precio u
+    FROM ", base_sql, "
     JOIN v_comparables c ON u.id_homologado = c.id_homologado
     WHERE u.comercio IN ({comercios_seleccionados*})
       AND u.precio_x_und BETWEEN {precio_min} AND {precio_max}
-  "
+      AND substr(u.fecha_consulta, 1, 10) BETWEEN {fecha_inicio} AND {fecha_fin}
+  ")
   
   if (!is.null(marcas_sel) && length(marcas_sel) > 0) {
     sql_base <- paste0(sql_base, " AND u.marca IN ({marcas_sel*})")
@@ -202,6 +213,10 @@ obtener_precios_filtrados <- function(comercios_seleccionados, marcas_sel = NULL
     sql_base <- paste0(sql_base, " AND (u.presentacion_original LIKE {patron} OR u.marca LIKE {patron} OR u.id_homologado LIKE {patron})")
   }
   
+  if (ejecucion_sel != "Todos") {
+    sql_base <- paste0(sql_base, " AND u.id_ejecucion = {ejecucion_sel}")
+  }
+  
   sql <- glue_sql(sql_base, .con = con)
   resultados <- dbGetQuery(con, sql)
   dbDisconnect(con)
@@ -211,15 +226,35 @@ obtener_precios_filtrados <- function(comercios_seleccionados, marcas_sel = NULL
 # Calcula los 6 indicadores clave directamente en SQL
 obtener_indicadores <- function() {
   con <- conectar_db()
-
+  
+  # 1. Productos homologados y desglose de anuncios con nombre de comercio
   n_comparables <- dbGetQuery(con, "SELECT COUNT(*) as n FROM v_comparables")$n
+  df_com <- dbGetQuery(con, "
+    SELECT comercio AS com, COUNT(DISTINCT id_anuncio) as n 
+    FROM v_ultimo_precio 
+    GROUP BY comercio 
+    ORDER BY comercio
+  ")
+  names(df_com) <- tolower(names(df_com))
   
+  desglose_comercios <- if (nrow(df_com) > 0) {
+    paste0(sum(df_com$n), " anuncios · ", paste0(df_com$com, " ", df_com$n, collapse = " · "))
+  } else {
+    "Presentes en los 3 comercios"
+  }
+  
+  # 2. Registros históricos y total de anuncios únicos en BD
   n_historial <- dbGetQuery(con, "SELECT COUNT(*) as n FROM precios_historial")$n
+  n_anuncios_tot <- dbGetQuery(con, "SELECT COUNT(*) as n FROM anuncios")$n
   
+  # 3. Ejecuciones y fecha de inicio del monitoreo
   n_ejecuciones <- dbGetQuery(con, "SELECT COUNT(DISTINCT id_ejecucion) as n FROM precios_historial")$n
+  primera_fecha <- dbGetQuery(con, "SELECT MIN(substr(fecha_consulta, 1, 10)) as f FROM precios_historial")$f
+  if (is.na(primera_fecha) || length(primera_fecha) == 0) primera_fecha <- "N/A"
   
+  # 4. Comercio más económico y su precio unitario promedio
   df_eco <- dbGetQuery(con, "
-    SELECT comercio AS com, AVG(precio_x_und) AS prom
+    SELECT comercio AS com, ROUND(AVG(precio_x_und), 2) AS prom
     FROM v_ultimo_precio 
     WHERE precio_x_und IS NOT NULL AND precio_x_und > 0
     GROUP BY comercio 
@@ -227,31 +262,70 @@ obtener_indicadores <- function() {
     LIMIT 1
   ")
   comercio_economico <- if (nrow(df_eco) > 0) as.character(df_eco$com[1]) else "N/A"
+  prom_economico <- if (nrow(df_eco) > 0) paste0("Promedio: $", format(df_eco$prom[1], big.mark = ".", decimal.mark = ","), " / und") else "Menor precio unitario"
   
-  ahorro_promedio <- dbGetQuery(con, "
-    SELECT ROUND(AVG((max_p - min_p) / max_p * 100), 1) as pct
+  # 5. Ahorro potencial promedio (%) y en pesos ($)
+  df_ahorro <- dbGetQuery(con, "
+    SELECT 
+      ROUND(AVG((max_p - min_p) / max_p * 100), 1) as pct,
+      ROUND(AVG(max_p - min_p), 0) as pesos
     FROM (
       SELECT id_homologado, MIN(precio) as min_p, MAX(precio) as max_p
       FROM v_ultimo_precio
       WHERE precio > 0
       GROUP BY id_homologado
     )
-  ")$pct
-  if (is.na(ahorro_promedio) || length(ahorro_promedio) == 0) ahorro_promedio <- 0
+  ")
+  ahorro_promedio <- if (!is.na(df_ahorro$pct[1])) df_ahorro$pct[1] else 0
+  ahorro_pesos <- if (!is.na(df_ahorro$pesos[1])) format(df_ahorro$pesos[1], big.mark = ".", decimal.mark = ",") else "0"
   
-
+  # 6. Última actualización y total de marcas analizadas
   ultima_fecha <- dbGetQuery(con, "SELECT MAX(fecha_consulta) as fecha FROM precios_historial")$fecha
   if (is.na(ultima_fecha) || length(ultima_fecha) == 0) ultima_fecha <- "Sin datos"
+  n_marcas <- dbGetQuery(con, "SELECT COUNT(DISTINCT id_homologado) as n  FROM v_comparables")$n
+  
+  # 7. Resumen de variaciones (Último precio de cada anuncio vs su precio inmediatamente anterior)
+  df_var <- dbGetQuery(con, "
+    WITH RankedPrecios AS (
+      SELECT 
+        p.id_anuncio,
+        p.precio,
+        ROW_NUMBER() OVER (PARTITION BY p.id_anuncio ORDER BY p.fecha_consulta DESC) AS rn
+      FROM precios_historial p
+      JOIN anuncios a ON p.id_anuncio = a.id_anuncio
+      JOIN v_comparables c ON a.id_homologado = c.id_homologado
+      WHERE p.precio > 0
+    )
+    SELECT 
+      SUM(CASE WHEN act.precio > ant.precio THEN 1 ELSE 0 END) AS subidas,
+      SUM(CASE WHEN act.precio < ant.precio THEN 1 ELSE 0 END) AS bajadas,
+      SUM(CASE WHEN act.precio = ant.precio THEN 1 ELSE 0 END) AS iguales
+    FROM RankedPrecios act
+    JOIN RankedPrecios ant ON act.id_anuncio = ant.id_anuncio
+    WHERE act.rn = 1 AND ant.rn = 2
+  ")
+  subidas <- if (!is.na(df_var$subidas[1])) df_var$subidas[1] else 0
+  bajadas <- if (!is.na(df_var$bajadas[1])) df_var$bajadas[1] else 0
+  iguales <- if (!is.na(df_var$iguales[1])) df_var$iguales[1] else 0
   
   dbDisconnect(con)
   
   list(
     n_comparables = n_comparables,
+    desglose_comercios = desglose_comercios,
     n_historial = n_historial,
+    n_anuncios_tot = format(n_anuncios_tot, big.mark = "."),
     n_ejecuciones = n_ejecuciones,
+    primera_fecha = primera_fecha,
     comercio_economico = comercio_economico,
+    prom_economico = prom_economico,
     ahorro_promedio = ahorro_promedio,
-    ultima_fecha = substr(as.character(ultima_fecha), 1, 16)
+    ahorro_pesos = ahorro_pesos,
+    ultima_fecha = substr(as.character(ultima_fecha), 1, 16),
+    n_marcas = n_marcas,
+    subidas = subidas,
+    bajadas = bajadas,
+    iguales = iguales
   )
 }
 # Obtiene la lista de ejecuciones registradas en la base de datos
@@ -326,18 +400,18 @@ obtener_lista_comparables <- function() {
 }
 # ========= GRAFICO 1 ==================================
 # Obtiene la historia de precios de un producto específico parametrizado
-obtener_historico_producto <- function(id_homo) {
+obtener_historico_producto <- function(id_homo, fecha_inicio = "2000-01-01", fecha_fin = "2099-12-31") {
   con <- conectar_db()
-  # Se estandariza 'comercio' como 'Comercio' para que Highcharter lo lea bien
   sql <- "
     SELECT c.comercio AS Comercio, p.precio, p.fecha_consulta
     FROM precios_historial p
     JOIN anuncios a ON p.id_anuncio = a.id_anuncio
     JOIN comercios c ON a.id_comercio = c.id_comercio
     WHERE a.id_homologado = ?
+      AND substr(p.fecha_consulta, 1, 10) BETWEEN ? AND ?
     ORDER BY p.fecha_consulta ASC
   "
-  res <- dbGetQuery(con, sql, params = list(id_homo))
+  res <- dbGetQuery(con, sql, params = list(id_homo, fecha_inicio, fecha_fin))
   dbDisconnect(con)
   return(res)
 }

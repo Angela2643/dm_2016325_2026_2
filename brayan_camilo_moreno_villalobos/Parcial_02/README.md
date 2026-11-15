@@ -1,6 +1,7 @@
 # Comparador de Precios - Alimentos para Mascotas (Colombia)
 
 Aplicación web interactiva desarrollada en **R Shiny** para monitorear, homologar y comparar precios de alimentos para mascotas (perros y gatos) en tres grandes cadenas de retail en Colombia: **Éxito, Jumbo y Olímpica**.
+🔗 **Aplicación en vivo (enlace):** [http://16h44d-bcmorenov.shinyapps.io/Comparador_de_Precios_Alimentos_para_Mascotas](http://16h44d-bcmorenov.shinyapps.io/Comparador_de_Precios_Alimentos_para_Mascotas)
 
 ---
 
@@ -50,12 +51,14 @@ Para ejecutar las pruebas unitarias localmente:
 testthat::test_dir("tests")
 ```
 ## 6. Declaración de Uso de Inteligencia Artificial
-Durante el desarrollo de este proyecto se utilizó un asistente de Inteligencia Artificial (Gemini) como herramienta de apoyo técnico para:
 
-Depuración de consultas SQL en SQLite y optimización mediante vistas (v_ultimo_precio).
+En cumplimiento con los lineamientos de transparencia académica, se declara el uso de un asistente de Inteligencia Artificial Generativa (**Gemini**) como herramienta de apoyo técnico, depuración y verificación durante el desarrollo de esta aplicación. 
 
-Resolución de incompatibilidades de renderizado en highcharter (construcción manual de series para diagramas de caja y gráficos de dona).
+El diseño de la arquitectura relacional, las reglas de homologación de productos, la lógica de negocio y la interpretación de los resultados fueron concebidos e implementados por el autor, empleando la IA específicamente como copiloto en las siguientes tareas puntuales:
 
-Estructuración de la lógica reactiva para el simulador de canasta de mercado y pruebas unitarias con testthat.
+* **Optimización y depuración de consultas SQL (`db.R`)**: Verificación de sintaxis en SQLite para la construcción de expresiones de tabla comunes (CTEs) y funciones de ventana (`ROW_NUMBER`), asegurando el cálculo eficiente de variaciones entre ejecuciones y evitando cuellos de botella en las vistas (`v_ultimo_precio`).
+* **Soporte en renderizado y reactividad (`server.R` / `ui.R`)**: Resolución de conflictos de tipos de datos y estandarización de nombres de columnas en el renderizado dinámico de tablas (`DT`) y gráficos interactivos (`highcharter`), así como la estructuración de tareas asíncronas (`ExtendedTask` / `future`) para evitar el bloqueo de la interfaz.
+* **Diagnóstico de despliegue en la nube (`shinyapps.io`)**: Análisis de registros del servidor (*logs*) para gestionar las restricciones de memoria y tiempos de espera de la capa gratuita, implementando controles preventivos y manejo de notificaciones en la interfaz.
+* **Aseguramiento de calidad (`tests/`)**: Validación de casos borde y estructuración de pruebas unitarias automatizadas con `testthat`.
 
-Todo el código generado fue revisado, adaptado, probado y validado sobre la base de datos real del proyecto.
+**Validación y dominio técnico:** Cada bloque de código sugerido o depurado fue auditado, adaptado e integrado manualmente por el autor, verificando su comportamiento real sobre la base de datos `comparador_precios.sqlite` y garantizando la capacidad plena para sustentar y explicar cada componente del sistema.
