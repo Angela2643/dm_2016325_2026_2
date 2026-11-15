@@ -1,0 +1,15 @@
+# Credenciales: nunca van al repositorio (Módulo 4)
+.Renviron
+.streamlit/secrets.toml
+.Rprofile.local
+rsconnect/
+
+# Archivos de R / RStudio
+.Rhistory
+.RData
+.Rproj.user/
+
+# Archivos temporales de SQLite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
