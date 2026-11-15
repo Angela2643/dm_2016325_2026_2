@@ -23,6 +23,24 @@ def test_ahorro_con_empate(base_prueba):
     assert "P03" not in ahorro.index
 
 
+def test_agotado_no_cuenta_como_mas_barato(base_prueba):
+    # En los sitios, un producto agotado casi siempre conserva el precio publicado.
+    # Ponemos agotado a La Rebaja en P01 (E2), que era el más barato, sin quitarle el precio.
+    with closing(sqlite3.connect(base_prueba)) as con, con:
+        con.execute("""UPDATE observaciones SET disponible = 0, disponibilidad = 'agotado'
+                       WHERE id_ejecucion = ? AND sku_comercio = 'R01'""", (E2,))
+    db.limpiar_cache()
+
+    p01 = db.ahorro_por_producto(db.Filtros(id_ejecucion=E2)).set_index("id_producto").loc["P01"]
+    assert p01["minimo"] == 11000
+    assert p01["mas_barato"] == "Cafam"
+    assert p01["ahorro"] == 1000
+    # La canasta y el gráfico de precio por unidad usan el mismo criterio
+    assert db.canasta(E2, {"P01": 1}).detalle.loc[0, "donde_comprar"] == "Cafam"
+    unitario = db.precio_unitario_comparables(db.Filtros(id_ejecucion=E2))
+    assert "La Rebaja" not in set(unitario.loc[unitario["id_producto"] == "P01", "comercio"])
+
+
 def test_canasta_con_empate(base_prueba):
     resultado = db.canasta(E1, {"P01": 1})
     assert sorted(resultado.mejores_comercios) == ["Cafam", "La Rebaja"]

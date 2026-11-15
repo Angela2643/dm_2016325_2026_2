@@ -132,7 +132,7 @@ cruda con `id_ejecucion`, `id_comercio` y `url_extraccion`.
 | `id_comercio` | TEXT | Comercio | ver `comercios` |
 | `sku_comercio` | TEXT | SKU observado | FK (`id_comercio`, `sku_comercio`) → `anuncios` |
 | `fecha_consulta` | TEXT | Fecha y hora en que se consultó la página o respuesta | ISO 8601 (-05:00) |
-| `precio` | REAL | Precio de venta publicado; si existe, es > 0 | COP; `NULL` = sin precio (solo si está agotado) |
+| `precio` | REAL | Precio de venta publicado; si existe, es > 0 | COP; `NULL` = sin precio (solo si está agotado; un agotado casi siempre conserva el precio publicado) |
 | `precio_lista` | REAL | Precio antes del descuento; si existe, es > 0 | COP; `NULL` si no se publica |
 | `promocion` | INTEGER | Si el precio es menor que el precio de lista | `1` = sí, `0` = no, `NULL` = no se puede saber |
 | `disponible` | INTEGER | Si el sitio lo muestra disponible | `1` = disponible, `0` = agotado |

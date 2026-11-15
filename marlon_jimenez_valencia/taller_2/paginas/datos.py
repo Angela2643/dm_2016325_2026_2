@@ -41,8 +41,8 @@ with interfaz.protegido():
         else:
             fig = px.bar(disp, x="comercio", y="anuncios", color="situacion", barmode="group",
                          text="anuncios",
-                         color_discrete_map={"disponible": "#2a78d6", "agotado": "#eb6834",
-                                             "no observado": "#8a8987"},
+                         color_discrete_map={"disponible": "#00876f", "agotado": "#c04a24",
+                                             "no observado": "#9e968c"},
                          category_orders={"situacion": ["disponible", "agotado", "no observado"],
                                           "comercio": interfaz.ORDEN_COMERCIOS})
             fig.update_traces(textposition="outside")

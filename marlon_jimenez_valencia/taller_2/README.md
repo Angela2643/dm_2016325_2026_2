@@ -62,13 +62,14 @@ Desde la carpeta `taller_2`, con el entorno activado:
 pytest tests/
 ```
 
-Son 29 casos en 12 funciones de prueba, que cubren lo que pide el enunciado:
+Son 30 casos en 13 funciones de prueba, que cubren lo que pide el enunciado:
 
 | Lo que se prueba | Archivo |
 |---|---|
 | Conversión de precios en texto a número (`"$ 12.900"` → 12900; un precio ausente queda vacío, nunca 0) | `tests/test_precios.py` |
 | Normalización de unidades (mL, g o unidad) | `tests/test_precios.py` |
 | Cálculo del ahorro con empates | `tests/test_consultas.py` |
+| Un producto agotado no cuenta como el más barato aunque conserve su precio (ahorro, canasta y precio por unidad) | `tests/test_consultas.py` |
 | Insertar dos veces la misma ejecución no duplica observaciones | `tests/test_insertar.py` |
 | Detección de cambios de precio (función `db.cambios_entre` y vista `v_cambios_precio`) | `tests/test_consultas.py` |
 | La canasta no se calcula cuando falta un producto | `tests/test_consultas.py` |
@@ -107,6 +108,8 @@ motivo.
 ```
 taller_2/
 ├── app.py                     entrada de la aplicación: configuración, navegación y filtros
+├── .streamlit/config.toml     estilo de la aplicación (colores, letras, barra lateral); no
+│                              lleva credenciales
 ├── paginas/                   una página por archivo (resumen, productos, cambios, canasta,
 │                              actualizar, datos)
 ├── interfaz.py                piezas visuales compartidas: formatos (COP, fechas), colores,
@@ -225,7 +228,9 @@ elegidos, ¿dónde suele estar más barato?
 
 **Cómo se calcula** (`db.mas_barato_mismo_ean`):
 
-1. Se toman los productos con el mismo EAN válido y con precio en todos los comercios elegidos.
+1. Se toman los productos disponibles con el mismo EAN válido y con precio en todos los comercios
+   elegidos. Los agotados no cuentan aunque el sitio conserve su precio, porque no se pueden
+   comprar (el mismo criterio de la canasta, del ahorro máximo y del precio por unidad).
 2. Para cada producto se busca el comercio con el menor precio.
 3. Se cuenta cuántas veces gana cada comercio. Si hay empate en el mínimo, el producto cuenta como
    "Empate".
@@ -233,30 +238,81 @@ elegidos, ¿dónde suele estar más barato?
 A diferencia del gráfico de precio por unidad, que usa solo los 10 comparables, este gráfico compara
 todos los productos idénticos que venden los tres comercios.
 
-**Por qué responde una pregunta del consumidor:** [POR ESCRIBIR — Marlon]
+**Por qué responde una pregunta del consumidor:** ayuda a decidir en qué droguería buscar primero
+cuando ya se sabe exactamente qué producto se necesita, por ejemplo cuando la fórmula médica indica
+una marca y una presentación. El código de barras (EAN) identifica un producto exacto (mismo
+laboratorio, concentración, forma y cantidad), así que se comparan productos idénticos y no nombres
+parecidos que podrían ser presentaciones distintas. Solo cuentan los productos disponibles, porque
+un producto agotado no se puede comprar aunque el sitio muestre su precio.
 
-> Preguntas guía: ¿qué decisión le ayuda a tomar a quien compra? ¿Por qué el código de barras
-> garantiza que se compara el mismo producto? ¿Qué no dice el gráfico (por ejemplo, cuánto se
-> ahorra, o productos que solo vende un comercio)?
+El gráfico tiene límites: cuenta cuántas veces gana cada comercio, pero no cuánto se ahorra (para
+eso están el indicador de ahorro máximo, el precio por unidad y la canasta); deja por fuera los
+productos que vende un solo comercio; y muestra una sola ejecución, es decir, los precios de una
+fecha.
 
 ## Hallazgos
 
-[POR ESCRIBIR — Marlon: máximo una página, al menos tres conclusiones para el consumidor que se
-puedan verificar en la aplicación, indicando el periodo y las ejecuciones en que se basan]
+**Periodo:** del 4 de octubre al 8 de noviembre de 2026. **Ejecuciones completas en los tres
+comercios:** `E20261004T182736` (4 de octubre), `E20261009T235057` (9 de octubre) y
+`E20261108T110310` (8 de noviembre). Precios en COP con IVA. Cuando se dice "más barato" solo
+cuentan productos disponibles.
 
-> Preguntas guía:
->
-> 1. En la ejecución del 8 de noviembre (`E20261108T110310`), ¿qué comercio es más barato en la
->    mayoría de los comparables o de los productos con el mismo código de barras? ¿Se mantiene
->    frente al 9 de octubre?
-> 2. ¿Cuánto cuesta una canasta concreta (por ejemplo, P01, P02 y P05) en cada comercio y cuánto
->    se ahorra combinando comercios?
-> 3. Entre el 9 de octubre y el 8 de noviembre, ¿cuántos precios subieron y cuántos bajaron? ¿En
->    qué comercio hubo más cambios?
-> 4. ¿Qué comercio tiene más productos en promoción o más agotados, y qué significa eso para quien
->    compra?
+1. **Para un mismo producto, Locatel suele ser el más barato.** El 8 de noviembre, de los 67
+   productos con el mismo código de barras disponibles en los tres comercios, Locatel tiene el
+   precio más bajo en 42 (63 %), La Rebaja en 20 y Cafam en 5. El 9 de octubre Locatel también
+   ganaba, pero por menos: 27 de 64, frente a 24 de Cafam y 13 de La Rebaja.
+   *Verificar:* Resumen → "¿Dónde es más barato?", eligiendo cada ejecución en la barra lateral.
+
+2. **Los precios de Cafam dependen mucho de la fecha: su promoción de octubre terminó.** El 9 de
+   octubre, 122 de los 228 productos de Cafam (53,5 %) estaban en promoción; el 8 de noviembre,
+   solo 13 de 294 (4,4 %). Entre esas dos ejecuciones subieron 164 precios de Cafam y no bajó
+   ninguno, lo que coincide con que Cafam pasara de ser el más barato en 24 productos a serlo en 5.
+   Para quien compra: un precio bajo puede ser una promoción temporal, así que conviene fijarse en
+   la fecha de la consulta.
+   *Verificar:* Cambios de precio (anterior `E20261009T235057`, posterior `E20261108T110310`) y el
+   indicador "Productos en promoción" del Resumen en cada ejecución.
+
+3. **En las presentaciones comparables la diferencia entre comercios es pequeña, y combinar
+   comercios ahorra poco.** El 8 de noviembre, la mayor diferencia entre las diez presentaciones
+   comparables es de $7.300 (levofloxacina 750 mg x5: $128.200 en Locatel frente a $135.500 en La
+   Rebaja, 5,4 %), y en seis de las diez es menor de $2.000. Una canasta con una unidad de P01, P02
+   y P05 cuesta $209.800 en La Rebaja y $213.200 en Cafam; Locatel no tiene total porque P02 está
+   agotado. Comprando cada producto donde es más barato se pagan $204.800: $5.000 menos (2,4 %) que
+   en La Rebaja, sin contar el envío de un segundo pedido.
+   *Verificar:* Resumen (indicador "Ahorro máximo") y Canasta (P01, P02 y P05, ejecución del 8 de
+   noviembre).
+
+4. **La marca pesa mucho más que el comercio.** El 8 de noviembre, la ciprofloxacina de 500 mg en
+   tableta cuesta desde $905 por tableta (Procatec, en Locatel) hasta $23.220 (Cipro, en La Rebaja):
+   unas 25 veces más por el mismo principio activo, la misma concentración y la misma forma. Antes
+   de cambiar de marca hay que consultar al médico o al farmacéutico.
+   *Verificar:* Productos → buscar "ciprofloxacin" → ordenar por precio unitario (filas de 500 mg
+   disponibles).
 
 ## Declaración de uso de inteligencia artificial
 
-[POR ESCRIBIR — Marlon: qué herramientas se usaron, para qué partes del trabajo y cómo se verificó
-el resultado (§11 del enunciado)]
+**Herramienta:** Claude Code (modelo Claude Opus 5.5, de Anthropic), en la aplicación de escritorio
+de Claude, trabajando sobre los archivos de mi computador. El módulo de extracción viene del Taller
+1, que también se hizo con Claude Code.
+
+**Para qué partes:** escritura y depuración del código (scraper, capa de datos, interfaz,
+páginas, validación, vistas SQL y pruebas), ejecución de las recolecciones, estilo visual de la
+aplicación y redacción de la documentación (este README, incluidos los hallazgos, y el diccionario
+de datos).
+
+**Cómo se verificó:**
+
+- 30 pruebas automáticas con pytest sobre una base temporal (nunca la base de la entrega). Se
+  comprobó que las pruebas fallan cuando se quita la corrección que vigilan.
+- Prueba de las seis páginas con `streamlit.testing` (AppTest), sin errores.
+- Los números de los hallazgos se compararon con consultas SQL independientes sobre la base, escritas
+  aparte de `db.py`.
+- Cada ejecución con observaciones tiene su copia cruda en `raw/`.
+- Los colores se revisaron con un validador de daltonismo y contraste.
+- Revisión de la aplicación en el navegador.
+
+Esa revisión encontró dos errores que se corrigieron antes de entregar: Cafam quedaba parcial
+porque el filtro por precio dejaba por fuera los agotados, y los productos agotados contaban como
+"más barato" aunque no se pudieran comprar.
+
+Soy responsable de todo el código entregado y de poder explicarlo.

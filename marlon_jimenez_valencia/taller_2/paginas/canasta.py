@@ -75,7 +75,7 @@ with interfaz.protegido():
         interfaz.estilo(fig, "Total de la canasta (COP)", "", leyenda=False)
         if resultado.costo_minimo is not None:
             fig.add_hline(y=resultado.costo_minimo, line_dash="dot", line_width=2,
-                          line_color="#8a8987")
+                          line_color="#8c8378")
             st.caption("La línea punteada es el costo mínimo combinando comercios "
                        f"({interfaz.cop(resultado.costo_minimo)}).")
         fig.update_yaxes(range=[0, completos["total"].max() * 1.15])

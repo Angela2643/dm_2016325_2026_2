@@ -57,7 +57,7 @@ with interfaz.protegido():
         top = ahorro.iloc[0]
         c3.metric("Ahorro máximo", interfaz.cop(top["ahorro"]), border=True,
                   help="Mayor diferencia de precio de una misma presentación comparable (P01 a P10) "
-                       "entre el comercio más caro y el más barato.")
+                       "entre el comercio más caro y el más barato. Solo productos disponibles.")
         c3.caption(f"COP · {top['id_producto']} {top['producto']}: más barato en {top['mas_barato']} "
                    f"({interfaz.cop(top['minimo'])}), más caro en {top['mas_caro']} "
                    f"({interfaz.cop(top['maximo'])}).")
@@ -96,7 +96,9 @@ with interfaz.protegido():
 
     agotados = int(conteos["agotados"].sum())
     c8.metric("Productos agotados", interfaz.numero(agotados), border=True,
-              help="Anuncios que el sitio publica como no disponibles (sin precio de venta).")
+              help="Anuncios que el sitio publica como agotados. Casi todos conservan el precio "
+                   "publicado, pero no cuentan para el ahorro, el precio por unidad, '¿Dónde es "
+                   "más barato?' ni la canasta, porque no se pueden comprar.")
     c8.caption(" · ".join(f"{r.comercio}: {interfaz.numero(r.agotados)}" for r in conteos.itertuples())
                + " (anuncios)")
 
@@ -148,7 +150,8 @@ with interfaz.protegido():
 
     with t2:
         st.markdown("**¿Cuánto cuesta cada unidad de contenido en cada comercio?** "
-                    "Solo presentaciones comparables (P01 a P10), sin mezclar unidades distintas.")
+                    "Solo presentaciones comparables (P01 a P10) disponibles, sin mezclar unidades "
+                    "distintas.")
         unitario = db.precio_unitario_comparables(f)
         if unitario.empty:
             interfaz.sin_datos("No hay presentaciones comparables con los filtros elegidos.")
@@ -208,8 +211,9 @@ with interfaz.protegido():
                     "comercios elegidos, ¿dónde suele estar más barato?**")
         ganadores = db.mas_barato_mismo_ean(f)
         if ganadores.empty:
-            interfaz.sin_datos("No hay productos con el mismo código de barras y precio en todos "
-                               "los comercios elegidos. Elige al menos dos comercios.")
+            interfaz.sin_datos("No hay productos disponibles con el mismo código de barras y "
+                               "precio en todos los comercios elegidos. Elige al menos dos "
+                               "comercios.")
         else:
             total = int(ganadores["productos_comparados"].iloc[0])
             ganadores["porcentaje"] = 100 * ganadores["productos"] / total
@@ -220,8 +224,8 @@ with interfaz.protegido():
             fig.update_traces(textposition="outside",
                               hovertemplate="%{x}: %{y} productos (%{customdata[0]:.1f} %)<extra></extra>")
             interfaz.estilo(fig, "Productos en que es el más barato", "", leyenda=False)
-            st.caption(f"{total} productos con el mismo EAN válido y precio en todos los comercios "
-                       f"elegidos · {periodo}. 'Empate' = dos o más comercios con el mismo precio "
+            st.caption(f"{total} productos disponibles con el mismo EAN válido y precio en todos "
+                       f"los comercios elegidos · {periodo}. 'Empate' = dos o más comercios con el mismo precio "
                        "mínimo.")
             interfaz.mostrar_grafico(fig, ganadores, {
                 "mas_barato": "Más barato en", "productos": "Productos",

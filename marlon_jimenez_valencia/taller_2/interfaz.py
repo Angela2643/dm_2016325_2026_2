@@ -21,15 +21,15 @@ import streamlit as st
 
 import db
 
-# Colores fijos por comercio (paleta categórica validada para daltonismo: los tres
-# primeros colores pasan todas las comparaciones por pares). El verde agua tiene poco
-# contraste sobre fondo claro: por eso cada gráfico ofrece su tabla de datos.
+# Colores fijos por comercio. Los tres primeros se revisaron para daltonismo y contraste
+# sobre el fondo de la app (#fbf8f3): se distinguen entre sí y tienen contraste >= 3:1.
+# Aun así, cada gráfico ofrece su tabla de datos.
 COLORES = {
-    "Cafam": "#2a78d6",        # azul
-    "La Rebaja": "#eb6834",    # naranja
-    "Locatel": "#1baf7a",      # verde agua
-    "Colsubsidio": "#6250d6",  # violeta (comercio de respaldo, no se usa por defecto)
-    "Empate": "#8a8987",       # gris neutro
+    "Cafam": "#8e2f6f",        # ciruela
+    "La Rebaja": "#c08417",    # mostaza
+    "Locatel": "#2f6fa0",      # azul petróleo
+    "Colsubsidio": "#5e7d3a",  # oliva (comercio de respaldo, no se usa por defecto)
+    "Empate": "#8c8378",       # gris cálido
 }
 ORDEN_COMERCIOS = ["Cafam", "La Rebaja", "Locatel", "Colsubsidio", "Empate"]
 MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]

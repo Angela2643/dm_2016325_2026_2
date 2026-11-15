@@ -344,6 +344,8 @@ def ahorro_por_producto(f: Filtros) -> pd.DataFrame:
     Para cada presentación comparable con precio en al menos dos comercios: precio
     mínimo y máximo, ahorro (máximo - mínimo) y dónde está más barata. Si dos comercios
     empatan en el mínimo, aparecen los dos ("La Rebaja / Locatel").
+    Solo cuentan los anuncios disponibles: un agotado suele conservar el precio publicado,
+    pero no se puede comprar (igual que en la canasta).
     """
     base, params = _consulta_filtrada(f, solo_comparables=True)
     return leer(f"""
@@ -351,6 +353,7 @@ def ahorro_por_producto(f: Filtros) -> pd.DataFrame:
             SELECT id_producto, id_comercio, nombre_corto, MIN(precio) AS precio
             FROM ({base})
             WHERE precio IS NOT NULL AND id_producto IS NOT NULL
+              AND disponibilidad = 'disponible'
             GROUP BY id_producto, id_comercio, nombre_corto
         ),
         rango AS (
@@ -414,7 +417,7 @@ def evolucion_precio(id_producto: str, comercios_elegidos: tuple[str, ...] = (),
 
 
 def precio_unitario_comparables(f: Filtros) -> pd.DataFrame:
-    """Gráfico 2: precio por mL, g o unidad de las presentaciones comparables."""
+    """Gráfico 2: precio por mL, g o unidad de las presentaciones comparables disponibles."""
     base, params = _consulta_filtrada(f, solo_comparables=True)
     return leer(f"""
         SELECT b.nombre_corto AS comercio, b.id_producto, p.descripcion AS producto,
@@ -423,6 +426,7 @@ def precio_unitario_comparables(f: Filtros) -> pd.DataFrame:
         FROM ({base}) b
         JOIN productos p ON p.id_producto = b.id_producto
         WHERE b.precio IS NOT NULL AND p.contenido_total IS NOT NULL
+          AND b.disponibilidad = 'disponible'
         ORDER BY p.unidad_normalizada, b.id_producto, b.nombre_corto""", params)
 
 
@@ -438,6 +442,7 @@ def mas_barato_mismo_ean(f: Filtros) -> pd.DataFrame:
     Gráfico 4 (libre, DECISIÓN de Marlon): entre los productos con el MISMO código de
     barras (EAN válido) en todos los comercios elegidos, ¿cuántas veces es más barato
     cada comercio? Si hay empate en el precio mínimo, el producto cuenta como 'Empate'.
+    Solo cuentan los anuncios disponibles, como en la canasta.
     """
     base, params = _consulta_filtrada(f)
     return leer(f"""
@@ -446,6 +451,7 @@ def mas_barato_mismo_ean(f: Filtros) -> pd.DataFrame:
             FROM ({base}) b
             JOIN anuncios a ON a.id_comercio = b.id_comercio AND a.sku_comercio = b.sku_comercio
             WHERE b.precio IS NOT NULL AND a.ean_valido = 1
+              AND b.disponibilidad = 'disponible'
             GROUP BY b.ean, b.id_comercio
         ),
         en_todos AS (
