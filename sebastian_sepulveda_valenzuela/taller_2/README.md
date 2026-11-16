@@ -3,7 +3,7 @@
 **Asignatura:** Minería de Datos (Código: 2016325) — Semestre 2026-2  
 **Institución:** Universidad Nacional de Colombia — Sede Bogotá  
 **Estudiante:** Sebastián Sepúlveda Valenzuela  
-**Enlace a la Aplicación Publicada:** `<<URL>>` *(Pegar aquí la URL pública de Streamlit Cloud)*  
+**Enlace a la Aplicación Publicada:** [https://comparador-precios-aseohogar-sebastian.streamlit.app/](https://comparador-precios-aseohogar-sebastian.streamlit.app/)  
 
 ---
 
