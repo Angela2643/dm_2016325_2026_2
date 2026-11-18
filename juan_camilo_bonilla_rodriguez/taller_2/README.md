@@ -164,15 +164,15 @@ En el alojamiento gratuito, los cambios de SQLite y las respuestas guardadas dur
 
 ## Uso de IA
 
-Se utilizó OpenAI Codex para apoyar el desarrollo de los módulos, las consultas SQL, las pruebas y la documentación. El trabajo partió del scraper, la base SQLite y las respuestas originales del Taller 1.
+Se utilizó OpenAI Codex como apoyo para desarrollar y revisar el código, las consultas SQL, las pruebas y la documentación, reutilizando el trabajo del Taller 1.
 
-Resumen de las instrucciones recibidas en esta conversación, incluido el enunciado del taller:
+Las instrucciones principales, resumidas de esta conversación y del enunciado, fueron:
 
-- Crear una carpeta nueva para el Taller 2, reutilizar el trabajo del Taller 1 y revisar los requisitos paso a paso.
-- Convertir el comparador en una aplicación Streamlit que consulte SQLite, actualice los precios mediante el scraper y permita trabajar sin conexión.
-- Conservar el historial y las copias crudas, obtener capturas en dos fechas y validar precios, fechas, duplicados y cobertura de las ocho presentaciones en los tres comercios.
-- Separar la interfaz, las consultas, la extracción y la validación; usar consultas parametrizadas y caché.
-- Incorporar filtros, indicadores, gráficos, comparación de ejecuciones y una canasta que no muestre un total cuando falte un producto.
-- Preparar pruebas con bases temporales, dependencias fijas, instrucciones de ejecución y una entrega limitada a la carpeta personal.
+- Reutilizar el scraper, SQLite y las copias originales del Taller 1.
+- Revisar los requisitos y conservar las ocho presentaciones comparables en los tres comercios.
+- Agregar una captura de otra fecha y validar los datos antes de insertarlos.
+- Separar la interfaz, las consultas, la extracción y la validación.
+- Comparación de fechas y canasta.
+- Comprobar el funcionamiento con pruebas y documentar la ejecución local y sin conexión.
 
-La verificación incluyó scraping real, comparación de las 822 observaciones con sus respuestas originales, 25 pruebas automáticas y una instalación en un entorno virtual nuevo. La publicación y las comprobaciones en el servidor siguen pendientes. El estudiante es responsable de entender y explicar el código entregado.
+Se verificaron las 822 observaciones contra las respuestas originales, se ejecutaron 25 pruebas automáticas y se comprobó la instalación en un entorno virtual nuevo.
