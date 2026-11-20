@@ -1,0 +1,11 @@
+.Renviron
+.RData
+.Rhistory
+.git
+.gitignore
+tests
+renv/library
+renv/local
+renv/staging
+renv/sandbox
+rsconnect
