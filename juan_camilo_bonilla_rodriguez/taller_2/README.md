@@ -4,7 +4,7 @@ Juan Camilo Bonilla Rodríguez · Python y Streamlit.
 
 Esta aplicación compara precios de termómetros, tensiómetros, glucómetros, tiras reactivas, lancetas y oxímetros en **Habib, Farmaprime y Farmaweb**. Se excluyen pruebas de embarazo y ovulación. Reutiliza el scraper, SQLite, las correspondencias y las respuestas originales de la [entrega del Taller 1](https://github.com/afflorezr/dm_2016325_2026_2/pull/139).
 
-**Aplicación publicada:** pendiente de publicar y comprobar en Streamlit Community Cloud. La ejecución local está disponible con las instrucciones siguientes. Este requisito no se considera cumplido mientras no exista un enlace público verificado.
+**Aplicación:** [Precios de salud](https://dm201632520262-ytvjx9dnyzxbacfkksc6cm.streamlit.app/)
 
 ## Ejecutar localmente
 
@@ -47,7 +47,7 @@ taller_2/
 └── .streamlit/config.toml       # Apariencia y configuración local
 ```
 
-Los módulos auxiliares de `codigo/` conservan el código reutilizado del Taller 1. La aplicación llama a `scraper.run_all`; no duplica los extractores dentro de la interfaz. Las rutas se resuelven a partir de la ubicación del proyecto, sin rutas personales ni cambios del directorio de trabajo. La carpeta se llama `taller_2`, como exige expresamente la sección 12 del enunciado.
+`codigo/` contiene los módulos reutilizados del Taller 1. El botón de actualización llama a `scraper.run_all`. Las rutas se resuelven desde la carpeta del proyecto.
 
 ## Qué permite consultar
 
@@ -56,7 +56,7 @@ Los módulos auxiliares de `codigo/` conservan el código reutilizado del Taller
 - **Mi canasta:** usa presentaciones y cantidades iguales en una sola ejecución. El total de una tienda queda ausente si falta cualquier producto o está agotado. Incluye mínimo combinado y ahorro frente a cada canasta completa.
 - **Datos y actualización:** muestra estados y cobertura; permite consultar las tiendas o reprocesar las copias originales.
 
-Los filtros laterales delimitan la oferta de la primera página. La evolución utiliza todo el historial del producto y los comercios elegidos. Las páginas de cambios y canasta tienen sus propios selectores de ejecución y productos, para evitar mezclar fechas o cantidades por accidente.
+Los filtros laterales delimitan la oferta de la primera página. La evolución utiliza todo el historial del producto y los comercios elegidos. Las páginas de cambios y canasta tienen sus propios selectores de ejecución y productos.
 
 El cuarto gráfico responde: **¿en qué presentación se ahorra más al cambiar de tienda?** Ordena las diferencias porcentuales de presentaciones idénticas con cobertura de los tres comercios. El gráfico de distribución describe surtidos diferentes; no se usa para afirmar que una tienda sea globalmente más barata.
 
@@ -74,9 +74,9 @@ En cada una se recorrieron las categorías completas: Habib, 102 anuncios; Farma
 
 Las ocho identidades siguen siendo: kit G30A con glucómetro, 50 tiras y 50 lancetas; G30A 50 tiras; G30A tres cajas de 50 tiras; G30A 50 tiras con 50 lancetas; Glucoquick 50 lancetas; Mediclas 25 tiras; Mediclas 50 tiras; Mediclas 100 lancetas. El archivo de correspondencias relaciona la marca, la presentación, la cantidad y el SKU de cada tienda mediante un identificador común. Un kit heterogéneo cuenta como un kit; no se divide su precio por la suma de tiras, lancetas y glucómetro.
 
-No había retroalimentación en los comentarios del PR del Taller 1 al revisar el 17 de noviembre. Se conservan sus registros y correcciones previas. La primera captura de este taller guardó las respuestas, pero el análisis de dos tiendas falló por la falta de `lxml` en el entorno nuevo. Tras instalarlo, se reprocesaron las mismas respuestas sin conexión y se conservaron las fechas reales de consulta. El cambio de estado de esas ejecuciones quedó en `correcciones`. Se realizó además otra captura en línea completa. No se cambiaron fechas ni precios para fabricar un historial.
+Al revisar el PR del Taller 1 el 17 de noviembre no había comentarios de retroalimentación. La primera captura de este taller guardó las respuestas, pero el procesamiento de dos tiendas falló porque faltaba `lxml`. Tras instalarlo, se reprocesaron esas respuestas con sus fechas originales. El cambio de estado quedó en `correcciones`. Después se realizó otra captura completa en línea.
 
-La disponibilidad diferencia **disponible**, **agotado según el sitio**, **desconocida** y **no observado**. La última situación se calcula para una ejecución sin insertar un precio ficticio. Una extracción parcial puede causar ausencias; no se interpretan como retiro ni agotamiento.
+La disponibilidad puede ser **disponible**, **agotado según el sitio** o **desconocida**. **No observado** indica que un anuncio no tuvo una observación válida en esa ejecución; puede deberse a una captura parcial y no demuestra agotamiento ni retiro.
 
 ## Actualización en línea y sin conexión
 
@@ -134,33 +134,15 @@ En las corridas completas del **16 y 17 de noviembre de 2026**, los precios de l
 
 Estos valores no incluyen envío, mínimos de compra ni condiciones de promociones. El ahorro de comprar en varias tiendas puede desaparecer al sumar esos costos. Los precios y existencias describen el momento de captura y no garantizan la oferta posterior. Un menor precio no es una recomendación de sustitución médica.
 
-## Publicación en Streamlit Community Cloud
+## Despliegue
 
-La publicación requiere acceso a la cuenta de Streamlit conectada al fork de GitHub. Cuando esté disponible:
+La aplicación está publicada en [Streamlit Community Cloud](https://dm201632520262-ytvjx9dnyzxbacfkksc6cm.streamlit.app/) desde el fork `jbonillaro-lgtm/dm_2016325_2026_2`, rama `entrega-taller-02`. El archivo de entrada es `juan_camilo_bonilla_rodriguez/taller_2/app.py`.
 
-1. Subir la rama de esta actividad al fork `jbonillaro-lgtm/dm_2016325_2026_2`.
-2. En [Streamlit Community Cloud](https://share.streamlit.io/), crear una aplicación desde ese repositorio y esa rama.
-3. Usar el archivo de entrada `juan_camilo_bonilla_rodriguez/taller_2/app.py` y seleccionar Python 3.14 en **Advanced settings**.
-4. Comprobar los filtros, cuatro gráficos, CSV, canasta, cambios y actualización en línea y sin conexión. Si una tienda bloquea al servidor, verificar que se informe la falla y funcione el reprocesamiento de raw.
-5. Reemplazar el aviso inicial de este README por el enlace público real y comprobar que coincida con el commit entregado. Mantenerlo disponible durante la evaluación y la semana siguiente.
-6. Abrir un PR al repositorio del curso que solo incluya esta actividad dentro de la carpeta personal.
+Para volver a desplegarla, usar esa rama y ruta y seleccionar Python 3.14 en **Advanced settings**, siguiendo la [guía de Streamlit](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy). Las correcciones se agregan al [PR del Taller 2](https://github.com/afflorezr/dm_2016325_2026_2/pull/140).
 
-Las instrucciones de configuración y selección de Python siguen la [guía oficial de despliegue](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy). No se requieren credenciales para consultar estos catálogos. Cualquier secreto de despliegue se configura en la plataforma o en `.streamlit/secrets.toml`, excluido de Git.
+La consulta de los catálogos no requiere credenciales. Los secretos de despliegue, si se necesitan, se configuran en la plataforma o en `.streamlit/secrets.toml`, que está excluido de Git.
 
-En el alojamiento gratuito, los cambios de SQLite y las respuestas guardadas durante una actualización pueden perderse al reiniciar. Esto no modifica la copia versionada de la entrega. Las capturas incluidas permiten iniciar sin conexión y la actualización en línea está probada localmente.
-
-## Revisión por módulo
-
-| Módulo | Comprobación realizada | Estado |
-|---|---|---|
-| 1. Datos | Historial heredado intacto; 822 observaciones auditadas; dos fechas completas; correcciones, rechazos, disponibilidad, vistas, índices y diccionario. | Verificado localmente |
-| 2. Actualización | Extracción real en los tres comercios; progreso, transacciones, fallas independientes, resumen, modo sin conexión e idempotencia. | Verificado localmente |
-| 3. Acceso | SQL separado de la interfaz, parámetros, caché y cierre de conexiones. | Verificado localmente |
-| 4. Seguridad | Entradas validadas, secretos excluidos, pausas y límites de peticiones. | Verificado localmente |
-| 5. Presentación | Navegación, seis indicadores, cuatro gráficos interactivos, filtros, tabla y CSV. | Verificado localmente |
-| 6. Consumidor | Familias de tamaños equivalentes, cambios entre ejecuciones, canasta completa y hallazgos reproducibles. | Verificado localmente |
-| 7. Calidad | Módulos separados, 25 pruebas aprobadas, auditoría sin red y dependencias fijadas. | Verificado localmente |
-| 8. Despliegue | Enlace público y comprobaciones en el servidor de Streamlit. | Pendiente de acceso y publicación |
+El servidor puede bloquear las consultas a alguna tienda. En ese caso, la aplicación muestra el estado por comercio y permite reprocesar las copias de `raw/`. En el alojamiento gratuito, las actualizaciones de SQLite y los archivos guardados en el servidor pueden perderse al reiniciar; la copia incluida en el repositorio se conserva.
 
 ## Uso de IA
 
