@@ -1,5 +1,5 @@
 # Taller de Web Scraping con R - Parte 1
-# Ejercicio 13: temperaturas diarias de Bogotá 2024-2025 (AccuWeather)
+# Ejercicio: temperaturas diarias de Bogotá 2024-2025 (AccuWeather)
 # Angela Tatiana Rincón Barrera
 
 paquetes <- c("rvest", "xml2", "httr", "dplyr", "stringr",
