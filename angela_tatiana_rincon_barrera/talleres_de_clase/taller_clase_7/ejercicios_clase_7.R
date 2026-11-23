@@ -1,6 +1,5 @@
 # Minería de Datos - Clase 7: limpieza, transformación y normalización
 # 9. Ejercicios prácticos
-# Angela Tatiana Rincón Barrera
 
 paquetes   <- c("dplyr", "tidyr", "readr", "stringr", "purrr", "tibble",
                 "ggplot2", "lubridate")
@@ -16,7 +15,7 @@ library(tibble)
 library(ggplot2)
 library(lubridate)
 
-ruta_datos <- "DATOS"
+ruta_datos <- "C:/Users/Administrar/OneDrive/Escritorio/6 SEXTO SEMESTRE/Minería de Datos/DATOS"
 leer <- function(archivo) read_csv(file.path(ruta_datos, archivo), show_col_types = FALSE)
 
 house   <- leer("house_prices.csv")
